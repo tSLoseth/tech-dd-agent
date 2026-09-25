@@ -26,8 +26,12 @@ export function parseArgs(argv: string[]): CliArgs {
     if (a === "--offline") args.offline = true;
     else if (a === "--out") args.out = argv[++i] ?? null;
     else if (a === "--model") args.model = argv[++i] ?? DEFAULT_MODEL;
-    else if (a === "--concurrency") args.concurrency = Number(argv[++i] ?? 3);
-    else if (!a.startsWith("--")) args.target = a;
+    else if (a === "--concurrency") {
+      const n = Number(argv[++i]);
+      if (!Number.isInteger(n) || n < 1) throw new Error(`--concurrency must be an integer of at least 1\n${USAGE}`);
+      args.concurrency = n;
+    } else if (a.startsWith("--")) throw new Error(`Unknown option ${a}\n${USAGE}`);
+    else args.target = a;
   }
   if (!args.target) throw new Error(USAGE);
   return args;

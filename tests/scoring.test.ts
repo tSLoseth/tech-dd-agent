@@ -37,6 +37,18 @@ describe("groundFindings", () => {
     expect(kept).toEqual([f({ evidenceIds: ["SEC-001"] })]);
     expect(dropped).toBe(1);
   });
+
+  it("counts READ evidence only for the dimension whose agent registered it", () => {
+    const ledger = new EvidenceLedger();
+    ledger.add({ dimension: "code_quality", kind: "file_read", summary: "read" }, "READ"); // READ-001
+    ledger.add({ dimension: "security", kind: "file_read", summary: "read" }, "READ"); // READ-002
+    const { kept, dropped } = groundFindings(
+      [f({ evidenceIds: ["READ-001", "READ-002"] }), f({ title: "Borrowed", evidenceIds: ["READ-001"] })],
+      ledger,
+    );
+    expect(kept).toEqual([f({ evidenceIds: ["READ-002"] })]);
+    expect(dropped).toBe(1);
+  });
 });
 
 describe("mergeFindings", () => {

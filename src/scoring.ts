@@ -23,7 +23,11 @@ export function groundFindings(findings: Finding[], ledger: EvidenceLedger): { k
   const kept: Finding[] = [];
   let dropped = 0;
   for (const finding of findings) {
-    const evidenceIds = finding.evidenceIds.filter((id) => ledger.has(id));
+    // A file read by one specialist is not evidence for another specialist's finding.
+    const evidenceIds = finding.evidenceIds.filter((id) => {
+      const e = ledger.get(id);
+      return e !== undefined && (!id.startsWith("READ-") || e.dimension === finding.dimension);
+    });
     if (evidenceIds.length === 0) dropped++;
     else kept.push({ ...finding, evidenceIds });
   }

@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { MockAnthropicClient } from "ensemble/testing";
 import { runDueDiligence } from "../src/pipeline.js";
+import { renderHtml } from "../src/report/html.js";
+import { renderMarkdown } from "../src/report/markdown.js";
 import { DIMENSIONS } from "../src/types.js";
 import { makeRepo } from "./helpers.js";
 
@@ -38,5 +40,25 @@ describe("runDueDiligence", () => {
     expect(report.findings.some((f) => f.title === "Secrets committed to source code")).toBe(true);
     expect(report.findings.some((f) => f.title === "Invented claim")).toBe(false);
     expect(report.summary!.headline).toBe("Leaked credentials block close.");
+  });
+
+  it("full mode: redacts secrets echoed by the model from every output", async () => {
+    const echo = (d: string) => ({
+      findings: [{
+        title: `Key ${FAKE_AWS_KEY} in ${d}`, dimension: d, severity: "high", description: `The key ${FAKE_AWS_KEY} is committed.`,
+        evidenceIds: ["SEC-001"], recommendation: `Rotate ${FAKE_AWS_KEY}.`, effort: "S",
+      }],
+    });
+    const mock = new MockAnthropicClient([
+      ...DIMENSIONS.map((d) => ({ text: JSON.stringify(echo(d)) })),
+      { text: JSON.stringify({ headline: `Rotate ${FAKE_AWS_KEY}.`, redFlags: [FAKE_AWS_KEY], valueLevers: [FAKE_AWS_KEY], hundredDayPlan: [FAKE_AWS_KEY] }) },
+    ]);
+    const report = await runDueDiligence({
+      root: makeRepo(files), target: "demo", mode: "full", model: "mock", client: mock.asClient(), concurrency: 1,
+    });
+    expect(report.findings.some((f) => f.description.includes("[REDACTED: AWS access key]"))).toBe(true);
+    for (const out of [renderMarkdown(report), renderHtml(report), JSON.stringify(report)]) {
+      expect(out).not.toContain(FAKE_AWS_KEY);
+    }
   });
 });

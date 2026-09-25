@@ -18,6 +18,16 @@ describe("parseArgs", () => {
   it("throws without a target", () => {
     expect(() => parseArgs(["--offline"])).toThrow(/Usage/);
   });
+
+  it("rejects unknown flags", () => {
+    expect(() => parseArgs(["./repo", "--ofline"])).toThrow(/Usage/);
+  });
+
+  it.each([["0"], ["-2"], ["1.5"], ["abc"], [undefined]])("rejects --concurrency %s", (n) => {
+    const argv = ["./repo", "--concurrency"];
+    if (n !== undefined) argv.push(n);
+    expect(() => parseArgs(argv)).toThrow(/Usage/);
+  });
 });
 
 describe("slug", () => {
@@ -59,4 +69,15 @@ describe("resolveTarget", () => {
   it("throws for a missing path", () => {
     expect(() => resolveTarget("C:/definitely/not/here")).toThrow(/not found/);
   });
+
+  it("keeps URL credentials out of a clone failure", () => {
+    let message = "";
+    try {
+      resolveTarget("https://user:TOKEN@127.0.0.1:1/x.git");
+    } catch (err) {
+      message = (err as Error).message;
+    }
+    expect(message).toContain("git clone failed for https://127.0.0.1:1/x.git");
+    expect(message).not.toContain("TOKEN");
+  }, 30_000);
 });

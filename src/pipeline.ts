@@ -3,8 +3,9 @@ import { runSpecialist, type AgentOptions } from "./agents/specialists.js";
 import { runSynthesis } from "./agents/synthesis.js";
 import { buildInventory, languageStats, makeReader } from "./inventory.js";
 import { collectEvidence } from "./scanners/index.js";
+import { redactSecrets } from "./scanners/security.js";
 import { combineFindings, groundFindings, overallScore, ruleFindings, scoreDimensions, sortFindings } from "./scoring.js";
-import { DIMENSIONS, type Finding, type Report } from "./types.js";
+import { DIMENSIONS, type Finding, type Report, type Summary } from "./types.js";
 
 export interface PipelineOptions extends AgentOptions {
   root: string;
@@ -33,7 +34,7 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
       runSpecialist(d, inventory, ledger, opts),
     );
     results.forEach((r) => addUsage(r.usage));
-    const grounded = groundFindings(results.flatMap((r) => r.findings), ledger);
+    const grounded = groundFindings(results.flatMap((r) => r.findings).map(redactFinding), ledger);
     droppedFindings = grounded.dropped;
     findings = combineFindings(rules, grounded.kept, ledger);
   }
@@ -45,7 +46,7 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
   let summary: Report["summary"] = null;
   if (opts.mode === "full") {
     const synthesis = await runSynthesis(opts.target, findings, scores, overall, opts);
-    summary = synthesis.summary;
+    summary = redactSummary(synthesis.summary);
     addUsage(synthesis.usage);
   }
 
@@ -69,6 +70,21 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
     usage,
   };
 }
+
+// The tools already redact what agents see; this scrubs model-written text once more before it reaches a report.
+const redactFinding = (f: Finding): Finding => ({
+  ...f,
+  title: redactSecrets(f.title),
+  description: redactSecrets(f.description),
+  recommendation: redactSecrets(f.recommendation),
+});
+
+const redactSummary = (s: Summary): Summary => ({
+  headline: redactSecrets(s.headline),
+  redFlags: s.redFlags.map(redactSecrets),
+  valueLevers: s.valueLevers.map(redactSecrets),
+  hundredDayPlan: s.hundredDayPlan.map(redactSecrets),
+});
 
 async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);

@@ -2,11 +2,13 @@ import { z } from "zod";
 import { defineTool, type RunnerTool } from "ensemble/tools";
 import type { EvidenceLedger } from "../evidence.js";
 import { makeReader } from "../inventory.js";
+import { isSecretFile, redactSecrets } from "../scanners/security.js";
 import type { Dimension, Inventory } from "../types.js";
 
 const MAX_READ_CHARS = 6_000;
 const MAX_LIST = 200;
 const MAX_GREP_BYTES = 200_000;
+const MAX_GREP_LINE = 2_000;
 
 export function createEvidenceTools(inv: Inventory, ledger: EvidenceLedger, dimension: Dimension): RunnerTool[] {
   const read = makeReader(inv);
@@ -31,7 +33,11 @@ export function createEvidenceTools(inv: Inventory, ledger: EvidenceLedger, dime
         if (!inv.files.some((f) => f.path === path)) {
           return { evidenceId: "NONE", content: `No such file: ${path}. Use list_files to find valid paths.` };
         }
-        const text = read(path);
+        const raw = read(path);
+        if (isSecretFile(path, raw)) {
+          return { evidenceId: "NONE", content: `Refused: ${path} holds credentials or keys and is not shown to agents. Cite the security scanner evidence instead.` };
+        }
+        const text = redactSecrets(raw);
         const evidence = ledger.add({ dimension, kind: "file_read", summary: `Inspected ${path}`, files: [path] }, "READ");
         const content = text.length > MAX_READ_CHARS ? `${text.slice(0, MAX_READ_CHARS)}\n…[truncated]` : text;
         return { evidenceId: evidence.id, content };
@@ -56,10 +62,14 @@ export function createEvidenceTools(inv: Inventory, ledger: EvidenceLedger, dime
         const files = new Set<string>();
         for (const f of inv.files) {
           if (f.lines === 0 || f.bytes > MAX_GREP_BYTES) continue;
-          const lines = read(f.path).split("\n");
+          const text = read(f.path);
+          if (isSecretFile(f.path, text)) continue;
+          const lines = text.split("\n");
           for (let i = 0; i < lines.length && matches.length < maxResults; i++) {
+            // Long (minified) lines are skipped to bound the cost of a pathological model-supplied regex.
+            if (lines[i]!.length > MAX_GREP_LINE) continue;
             if (re.test(lines[i]!)) {
-              matches.push(`${f.path}:${i + 1}: ${lines[i]!.trim().slice(0, 200)}`);
+              matches.push(`${f.path}:${i + 1}: ${redactSecrets(lines[i]!.trim()).slice(0, 200)}`);
               files.add(f.path);
             }
           }

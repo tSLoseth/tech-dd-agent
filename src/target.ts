@@ -11,7 +11,16 @@ export function resolveTarget(target: string): { root: string; display: string; 
   if (/^(https?:\/\/|git@)/.test(target)) {
     const dir = mkdtempSync(join(tmpdir(), "tdd-clone-"));
     // blob:none keeps the full commit history (needed for the team scanner) while fetching only HEAD file contents.
-    execFileSync("git", ["clone", "--quiet", "--filter=blob:none", target, dir], { stdio: "inherit" });
+    try {
+      // stderr is not inherited: git may echo the URL, credentials included.
+      execFileSync("git", ["clone", "--quiet", "--filter=blob:none", target, dir], {
+        stdio: ["ignore", "ignore", "pipe"],
+        env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+      });
+    } catch {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 3 });
+      throw new Error(`git clone failed for ${redactUrl(target)}`);
+    }
     return { root: dir, display: redactUrl(target), cleanup: () => rmSync(dir, { recursive: true, force: true, maxRetries: 3 }) };
   }
   const root = resolve(target);

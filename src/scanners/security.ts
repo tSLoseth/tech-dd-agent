@@ -1,20 +1,37 @@
+import { isTestPath } from "../inventory.js";
 import type { EvidenceInput, Scanner } from "../types.js";
 import { fileName } from "./stack.js";
 
-const SECRET_PATTERNS: Array<{ name: string; re: RegExp }> = [
+// `generic` patterns also match placeholders, so they are not applied to docs and tests.
+const SECRET_PATTERNS: Array<{ name: string; re: RegExp; generic?: boolean }> = [
   { name: "AWS access key", re: /AKIA[0-9A-Z]{16}/ },
   { name: "Private key", re: /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/ },
   { name: "Anthropic API key", re: /sk-ant-[A-Za-z0-9_-]{20,}/ },
+  { name: "OpenAI project key", re: /sk-proj-[A-Za-z0-9_-]{20,}/ },
   { name: "OpenAI-style API key", re: /\bsk-[A-Za-z0-9]{32,}\b/ },
   { name: "Slack webhook", re: /hooks\.slack\.com\/services\/[A-Za-z0-9/]+/ },
-  { name: "Hardcoded credential", re: /\b(?:api[_-]?key|secret|passw(?:or)?d|token)\b\s*[:=]\s*["'][^"'\s]{12,}["']/i },
+  { name: "Hardcoded credential", re: /\b(?:api[_-]?key|secret|passw(?:or)?d|token)\b\s*[:=]\s*["'][^"'\s]{12,}["']/i, generic: true },
 ];
+const REDACTORS = SECRET_PATTERNS.map((p) => ({ name: p.name, re: new RegExp(p.re.source, `${p.re.flags}g`) }));
+const PRIVATE_KEY_RE = SECRET_PATTERNS.find((p) => p.name === "Private key")!.re;
 const ENV_FILE_RE = /(^|\/)\.env(\.[a-z0-9_-]+)?$/i;
 const ENV_TEMPLATE_RE = /\.(example|sample|template|dist)$/i;
+const KEY_FILE_RE = /(^|\/)(id_(rsa|dsa|ecdsa|ed25519)|[^/]+\.(pem|key|p12|pfx))$/i;
 const DOCKERFILE_RE = /(^|\/)Dockerfile[^/]*$/;
 const UPDATES_RE = /^\.github\/dependabot\.ya?ml$|(^|\/)renovate\.json5?$|^\.renovaterc(\.json)?$/;
 const MANIFEST_RE = /(^|\/)(package\.json|requirements\.txt|pyproject\.toml|go\.mod|pom\.xml|build\.gradle|Cargo\.toml)$/;
 const MAX_SCAN_BYTES = 500_000;
+
+export function redactSecrets(text: string): string {
+  return REDACTORS.reduce((t, r) => t.replace(r.re, `[REDACTED: ${r.name}]`), text);
+}
+
+export const isEnvFile = (path: string): boolean => ENV_FILE_RE.test(path) && !ENV_TEMPLATE_RE.test(path);
+
+// Files the agents may never see: real .env files and private keys (by file name or by content).
+export function isSecretFile(path: string, text: string): boolean {
+  return isEnvFile(path) || KEY_FILE_RE.test(path) || PRIVATE_KEY_RE.test(text);
+}
 
 export const scanSecurity: Scanner = ({ inventory, read }) => {
   const out: EvidenceInput[] = [];
@@ -24,8 +41,10 @@ export const scanSecurity: Scanner = ({ inventory, read }) => {
   const secretFiles = new Set<string>();
   for (const f of inventory.files) {
     if (f.lines === 0 || f.bytes > MAX_SCAN_BYTES || fileName(f.path).endsWith("lock.json") || f.path.endsWith(".lock")) continue;
+    const skipGeneric = /\.md$/i.test(f.path) || isTestPath(f.path);
     read(f.path).split("\n").forEach((line, i) => {
       for (const p of SECRET_PATTERNS) {
+        if (p.generic && skipGeneric) continue;
         if (p.re.test(line)) {
           hits.push(`${f.path}:${i + 1} — ${p.name}`);
           secretFiles.add(f.path);
@@ -49,7 +68,7 @@ export const scanSecurity: Scanner = ({ inventory, read }) => {
     });
   }
 
-  const envFiles = inventory.files.filter((f) => ENV_FILE_RE.test(f.path) && !ENV_TEMPLATE_RE.test(f.path));
+  const envFiles = inventory.files.filter((f) => isEnvFile(f.path));
   if (envFiles.length > 0) {
     out.push({
       dimension: "security",

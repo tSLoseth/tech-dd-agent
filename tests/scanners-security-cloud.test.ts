@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { scanSecurity } from "../src/scanners/security.js";
+import { redactSecrets, scanSecurity } from "../src/scanners/security.js";
 import { scanCloud } from "../src/scanners/cloud.js";
 import { ctxFor } from "./helpers.js";
 
 const byKind = <T extends { kind: string }>(ev: T[], kind: string) => ev.find((e) => e.kind === kind);
 const FAKE_AWS_KEY = "AKIA" + "ABCDEFGHIJKLMNOP"; // split so this file is not itself a hit
+const FAKE_OPENAI_PROJECT_KEY = "sk-" + "proj-" + "abcdEFGH1234_ijkl-5678mnop";
 
 describe("scanSecurity", () => {
   it("flags hardcoded secrets as critical and never leaks the value", () => {
@@ -37,6 +38,32 @@ describe("scanSecurity", () => {
     expect(byKind(scanSecurity(ctxFor({ "package.json": "{}" })), "dependency_updates")!.flag).toBeDefined();
     expect(byKind(scanSecurity(ctxFor({ "notes.txt": "x" })), "dependency_updates")).toBeUndefined();
     expect(byKind(scanSecurity(ctxFor({ "package.json": "{}", ".github/dependabot.yml": "version: 2\n" })), "dependency_updates")!.flag).toBeUndefined();
+  });
+
+  it("does not flag a generic credential placeholder in docs or tests", () => {
+    const line = `const apiKey = "${"x".repeat(16)}";\n`;
+    expect(byKind(scanSecurity(ctxFor({ "README.md": line, "tests/auth.test.ts": line, "src/__tests__/a.ts": line })), "secrets")).toBeUndefined();
+    expect(byKind(scanSecurity(ctxFor({ "src/config.ts": line })), "secrets")!.detail).toContain("Hardcoded credential");
+  });
+
+  it("still flags specific key formats in docs", () => {
+    expect(byKind(scanSecurity(ctxFor({ "README.md": `key: ${FAKE_AWS_KEY}\n` })), "secrets")).toBeDefined();
+  });
+
+  it("detects OpenAI project keys", () => {
+    const ev = scanSecurity(ctxFor({ "src/ai.ts": `const k = "${FAKE_OPENAI_PROJECT_KEY}";\n` }));
+    expect(byKind(ev, "secrets")!.detail).toContain("OpenAI project key");
+  });
+});
+
+describe("redactSecrets", () => {
+  it("replaces every secret match with its pattern name", () => {
+    const text = `a ${FAKE_AWS_KEY} b ${FAKE_AWS_KEY} c ${FAKE_OPENAI_PROJECT_KEY}`;
+    expect(redactSecrets(text)).toBe("a [REDACTED: AWS access key] b [REDACTED: AWS access key] c [REDACTED: OpenAI project key]");
+  });
+
+  it("leaves ordinary text unchanged", () => {
+    expect(redactSecrets("const port = 3000;")).toBe("const port = 3000;");
   });
 });
 
