@@ -3,6 +3,7 @@ import { EventBus } from "ensemble";
 import { MockAnthropicClient } from "ensemble/testing";
 import { createEvidenceTools } from "../src/agents/tools.js";
 import { runSpecialist } from "../src/agents/specialists.js";
+import { specialistSystem } from "../src/agents/prompts.js";
 import { buildInventory, makeReader } from "../src/inventory.js";
 import { collectEvidence } from "../src/scanners/index.js";
 import { EvidenceLedger } from "../src/evidence.js";
@@ -103,6 +104,12 @@ describe("createEvidenceTools", () => {
     const grep = createEvidenceTools(inv, new EvidenceLedger(), "architecture").find((t) => t.name === "grep")!;
     const out = JSON.parse((await grep.execute({ pattern: "a" }, ctx)).content);
     expect(out.matches).toEqual(["src/min.js:2: short a"]);
+  });
+});
+
+describe("specialistSystem", () => {
+  it("keeps the bus-factor rule generic", () => {
+    expect(specialistSystem("team_process")).not.toMatch(/16 contributors|31%/);
   });
 });
 

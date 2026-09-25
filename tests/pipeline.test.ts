@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { execFileSync } from "node:child_process";
 import { MockAnthropicClient } from "ensemble/testing";
+import { buildInventory } from "../src/inventory.js";
+import { collectEvidence } from "../src/scanners/index.js";
 import { runDueDiligence } from "../src/pipeline.js";
 import { renderHtml } from "../src/report/html.js";
 import { renderMarkdown } from "../src/report/markdown.js";
@@ -62,6 +65,26 @@ describe("runDueDiligence", () => {
     expect(report.overall.rag).not.toBe("green");
     expect(renderMarkdown(report)).toContain("Not assessed");
     expect(renderHtml(report)).toContain("Not assessed");
+  });
+
+  it("full mode: strips severity words from titles and caps history-only team findings", async () => {
+    const root = makeRepo(files);
+    execFileSync("git", ["-C", root, "init", "-q"]);
+    execFileSync("git", ["-C", root, "-c", "user.name=a", "-c", "user.email=a@x", "commit", "--allow-empty", "-q", "-m", "one"]);
+    const busId = collectEvidence({ inventory: buildInventory(root), read: () => "" }).all().find((e) => e.kind === "bus_factor")!.id;
+    const one = (d: string, title: string, severity: string, id: string) => ({
+      findings: [{ title, dimension: d, severity, description: "d", evidenceIds: [id], recommendation: "r", effort: "S" }],
+    });
+    const mock = new MockAnthropicClient([
+      ...DIMENSIONS.map((d) => ({
+        text: JSON.stringify(d === "team_process" ? one(d, "Critical bus factor: one author", "high", busId) : one(d, `High: gap in ${d}`, "low", "ARC-001")),
+      })),
+      { text: JSON.stringify({ headline: "h", redFlags: [], valueLevers: [], hundredDayPlan: [] }) },
+    ]);
+    const report = await runDueDiligence({ root, target: "demo", mode: "full", model: "mock", client: mock.asClient(), concurrency: 1 });
+    const team = report.findings.find((f) => f.dimension === "team_process" && f.evidenceIds.includes(busId))!;
+    expect(team).toMatchObject({ title: "Bus factor: one author", severity: "medium" });
+    expect(report.findings.find((f) => f.dimension === "architecture")!.title).toBe("Gap in architecture");
   });
 
   it("full mode: throws when every specialist fails", async () => {

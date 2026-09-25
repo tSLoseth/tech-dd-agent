@@ -4,7 +4,10 @@ import { runSynthesis } from "./agents/synthesis.js";
 import { buildInventory, languageStats, makeReader } from "./inventory.js";
 import { collectEvidence } from "./scanners/index.js";
 import { redactSecrets } from "./scanners/security.js";
-import { combineFindings, groundFindings, overallScore, ruleFindings, scoreDimensions, sortFindings } from "./scoring.js";
+import {
+  capTeamHistory, combineFindings, dropContradictedStrengths, groundFindings, overallScore, ruleFindings, scoreDimensions, sortFindings,
+  stripSeverityWord,
+} from "./scoring.js";
 import { DIMENSIONS, type Dimension, type Finding, type Report, type Summary } from "./types.js";
 
 export interface PipelineOptions extends AgentOptions {
@@ -43,9 +46,10 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
     const ok = results.filter((r) => r !== null);
     if (ok.length === 0) throw new Error("All specialists failed; no report was written.");
     ok.forEach((r) => addUsage(r.usage));
-    const grounded = groundFindings(ok.flatMap((r) => r.findings).map(redactFinding), ledger);
+    const grounded = groundFindings(ok.flatMap((r) => r.findings).map(cleanFinding), ledger);
     droppedFindings = grounded.dropped;
-    const combined = combineFindings(rules, grounded.kept, ledger);
+    const calibrated = dropContradictedStrengths(capTeamHistory(grounded.kept, ledger), ledger);
+    const combined = combineFindings(rules, calibrated, ledger);
     findings = combined.findings;
     dedupedFindings = combined.deduped;
   }
@@ -86,9 +90,9 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
 }
 
 // The tools already redact what agents see; this scrubs model-written text once more before it reaches a report.
-const redactFinding = (f: Finding): Finding => ({
+const cleanFinding = (f: Finding): Finding => ({
   ...f,
-  title: redactSecrets(f.title),
+  title: stripSeverityWord(redactSecrets(f.title)),
   description: redactSecrets(f.description),
   recommendation: redactSecrets(f.recommendation),
 });

@@ -70,13 +70,16 @@ export function scanGitHistory(root: string, now: number = Date.now()): Evidence
     {
       dimension: "team_process",
       kind: "activity",
-      summary: `${commits.length} commits by ${ranked.length} contributors since ${new Date(oldest).toISOString().slice(0, 7)}; ${recent} in the last 90 days; last commit ${idleDays} days ago`,
+      summary: `${commits.length} commits by ${ranked.length} contributors since ${new Date(oldest).toISOString().slice(0, 7)}; ${recent} in the last 90 days; last commit ${idleDays} days ago${
+        commits.length < BUS_FACTOR_MIN_COMMITS ? `; history too short to assess key-person risk (${commits.length} commits)` : ""
+      }`,
     },
     {
       dimension: "team_process",
       kind: "bus_factor",
       summary: `Bus factor ${busFactor}: top contributor authored ${topShare}% of commits`,
-      detail: ranked.slice(0, 5).map(([a, n]) => `${a}: ${n}`).join("\n"),
+      // Ranked, never named: the report should not profile individual developers.
+      detail: ranked.slice(0, 5).map(([, n], i) => `Contributor ${String.fromCharCode(65 + i)}: ${n}`).join("\n"),
       ...(busFactor === 1 && commits.length >= BUS_FACTOR_MIN_COMMITS
         ? {
             flag: {

@@ -101,3 +101,34 @@ export function overallScore(scores: DimensionScore[], findings: Finding[]): { s
   const rag = ragFor(score, findings.some((f) => f.severity === "critical"));
   return { score, rag: rag === "green" && assessed.length < scores.length ? "amber" : rag };
 }
+
+const HISTORY_KINDS = new Set(["activity", "bus_factor", "staleness"]);
+
+// Commit counts without a scanner flag (short history, spread team) cannot carry a high or critical team finding.
+export function capTeamHistory(findings: Finding[], ledger: EvidenceLedger): Finding[] {
+  return findings.map((f) => {
+    if (f.dimension !== "team_process" || RANK[f.severity] <= RANK.medium) return f;
+    const scanner = f.evidenceIds.filter((id) => !id.startsWith("READ-")).map((id) => ledger.get(id));
+    const historyOnly = scanner.length > 0 && scanner.every((e) => e !== undefined && HISTORY_KINDS.has(e.kind) && !e.flag);
+    return historyOnly ? { ...f, severity: "medium" } : f;
+  });
+}
+
+const SEVERITY_PREFIX = /^(critical|high|medium|low)\b[\s:\-–—]*/i;
+
+export function stripSeverityWord(title: string): string {
+  const rest = title.replace(SEVERITY_PREFIX, "");
+  if (rest === title || rest.length < 3) return title;
+  return rest[0]!.toUpperCase() + rest.slice(1);
+}
+
+// A strength (info) about a file that a scanner flagged in the same dimension or in security contradicts that flag,
+// e.g. "Dockerfile has a USER directive" next to "container runs as root".
+export function dropContradictedStrengths(findings: Finding[], ledger: EvidenceLedger): Finding[] {
+  const flagged = ledger.all().filter((e) => e.flag && e.files?.length);
+  return findings.filter((f) => {
+    if (f.severity !== "info") return true;
+    const files = new Set(f.evidenceIds.flatMap((id) => ledger.get(id)?.files ?? []));
+    return !flagged.some((e) => (e.dimension === f.dimension || e.dimension === "security") && e.files!.some((p) => files.has(p)));
+  });
+}

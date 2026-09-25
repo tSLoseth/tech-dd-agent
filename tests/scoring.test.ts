@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { EvidenceLedger } from "../src/evidence.js";
 import {
-  combineFindings, dedupeAcrossDimensions, groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings,
+  capTeamHistory, combineFindings, dedupeAcrossDimensions, dropContradictedStrengths, stripSeverityWord, groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings,
 } from "../src/scoring.js";
 import type { Finding } from "../src/types.js";
 
@@ -170,5 +170,67 @@ describe("scoring", () => {
   it("sorts findings by severity, most severe first", () => {
     const sorted = sortFindings([f({ severity: "low" }), f({ severity: "critical" }), f({ severity: "info" })]);
     expect(sorted.map((x) => x.severity)).toEqual(["critical", "low", "info"]);
+  });
+});
+
+describe("capTeamHistory", () => {
+  const ledger = new EvidenceLedger();
+  ledger.add({ dimension: "team_process", kind: "activity", summary: "4 commits" }); // TEAM-001
+  ledger.add({ dimension: "team_process", kind: "bus_factor", summary: "bus factor 1" }); // TEAM-002
+  ledger.add({ dimension: "team_process", kind: "bus_factor", summary: "bus factor 1", flag: { severity: "high", title: "Key-person dependency", recommendation: "r", effort: "M" } }); // TEAM-003
+  ledger.add({ dimension: "team_process", kind: "ci", summary: "no CI" }); // TEAM-004
+  ledger.add({ dimension: "team_process", kind: "file_read", summary: "read" }, "READ"); // READ-001
+  const team = (over: Partial<Finding>) => f({ dimension: "team_process", severity: "high", ...over });
+
+  it("caps a finding resting only on unflagged history evidence at medium", () => {
+    expect(capTeamHistory([team({ evidenceIds: ["TEAM-001", "TEAM-002", "READ-001"] })], ledger)[0]!.severity).toBe("medium");
+  });
+
+  it("leaves findings backed by a scanner flag, other evidence or lower severity alone", () => {
+    const flagged = team({ evidenceIds: ["TEAM-003"] });
+    const ci = team({ evidenceIds: ["TEAM-002", "TEAM-004"] });
+    const readOnly = team({ evidenceIds: ["READ-001"] });
+    const low = team({ severity: "low", evidenceIds: ["TEAM-002"] });
+    const otherDim = f({ severity: "high", evidenceIds: ["TEAM-002"] });
+    expect(capTeamHistory([flagged, ci, readOnly, low, otherDim], ledger)).toEqual([flagged, ci, readOnly, low, otherDim]);
+  });
+});
+
+describe("stripSeverityWord", () => {
+  it.each([
+    ["Critical bus factor: single contributor", "Bus factor: single contributor"],
+    ["High: No CI pipeline", "No CI pipeline"],
+    ["MEDIUM - Unpinned images", "Unpinned images"],
+    ["low   test coverage", "Test coverage"],
+    ["Highly coupled modules", "Highly coupled modules"],
+    ["No CI pipeline", "No CI pipeline"],
+    ["High", "High"],
+  ])("%s -> %s", (title, expected) => {
+    expect(stripSeverityWord(title)).toBe(expected);
+  });
+});
+
+describe("dropContradictedStrengths", () => {
+  const ledger = new EvidenceLedger();
+  ledger.add({ dimension: "security", kind: "container_user", summary: "root", files: ["Dockerfile"], flag: { severity: "medium", title: "Containers run as root", recommendation: "r", effort: "S" } }); // SEC-001
+  ledger.add({ dimension: "code_quality", kind: "large_files", summary: "big", files: ["src/big.ts"], flag: { severity: "low", title: "Big", recommendation: "r", effort: "S" } }); // QUA-001
+  ledger.add({ dimension: "cloud_readiness", kind: "file_read", summary: "Inspected Dockerfile", files: ["Dockerfile"] }, "READ"); // READ-001
+  ledger.add({ dimension: "cloud_readiness", kind: "file_read", summary: "Inspected src/big.ts", files: ["src/big.ts"] }, "READ"); // READ-002
+  ledger.add({ dimension: "code_quality", kind: "file_read", summary: "Inspected src/big.ts", files: ["src/big.ts"] }, "READ"); // READ-003
+
+  it("drops a strength about a file that a security flag contradicts", () => {
+    const strength = f({ title: "Dockerfile has USER directive", dimension: "cloud_readiness", severity: "info", evidenceIds: ["READ-001"] });
+    expect(dropContradictedStrengths([strength], ledger)).toEqual([]);
+  });
+
+  it("drops a strength about a file flagged in its own dimension", () => {
+    const strength = f({ title: "Clean module", dimension: "code_quality", severity: "info", evidenceIds: ["READ-003"] });
+    expect(dropContradictedStrengths([strength], ledger)).toEqual([]);
+  });
+
+  it("keeps strengths flagged only in an unrelated dimension, and non-info findings", () => {
+    const strength = f({ title: "Well factored", dimension: "cloud_readiness", severity: "info", evidenceIds: ["READ-002"] });
+    const risk = f({ title: "Root user", dimension: "cloud_readiness", severity: "medium", evidenceIds: ["READ-001"] });
+    expect(dropContradictedStrengths([strength, risk], ledger)).toEqual([strength, risk]);
   });
 });

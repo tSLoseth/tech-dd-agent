@@ -29,6 +29,16 @@ describe("scanGitHistory", () => {
     const bus = ev.find((e) => e.kind === "bus_factor")!;
     expect(bus.summary).toContain("95%");
     expect(bus.flag!.title).toBe("Key-person dependency");
+    expect(bus.detail).toBe("Contributor A: 20\nContributor B: 1");
+    expect(JSON.stringify(ev)).not.toContain("alice");
+  });
+
+  it("says when the history is too short to assess key-person risk", () => {
+    const root = gitRepo();
+    commits(root, "alice", 3);
+    const ev = scanGitHistory(root);
+    expect(ev.find((e) => e.kind === "activity")!.summary).toContain("; history too short to assess key-person risk (3 commits)");
+    expect(ev.find((e) => e.kind === "bus_factor")!.flag).toBeUndefined();
   });
 
   it("flags a dormant codebase", () => {
