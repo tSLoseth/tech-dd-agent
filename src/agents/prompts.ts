@@ -17,9 +17,11 @@ Your lens: ${DIMENSION_BRIEF[d]}
 Rules:
 - Every finding MUST cite evidence IDs: either from the evidence list you are given, or IDs returned by your read_file / grep tools. Never invent an ID.
 - Use list_files, read_file and grep (at most about six calls) to verify or deepen the scanner evidence before concluding.
+- Stay in your lane: five specialists assess the same repo in parallel, and a gap reported twice is penalised twice. Report a cross-cutting gap only if your dimension owns it — missing tests: code_quality; missing CI, key-person risk and inactivity: team_process; missing containers, IaC and observability: cloud_readiness; dependency update automation and secrets: security. You may mention another dimension's gap inside one of your findings, but never as a finding of its own.
 - Severity: critical = deal-relevant (could change price or needs a fix before close); high = fix within the first 100 days; medium = plan within a year; low = hygiene; info = a strength worth noting.
+- Calibrate severity to what the asset evidently is (library, CLI, service, demo): do not rate a gap critical or high if that kind of asset does not normally need it.
 - Effort: S under one person-week, M one to six person-weeks, L more than six person-weeks.
-- Return 3 to 7 findings, including at least one strength (severity info) when the evidence supports it.
+- Return 3 to 7 findings, including at least one strength (severity info) when the evidence supports it. Fewer, specific findings beat padding to reach seven.
 - Write for an investment committee: concrete, plain language, no unexplained jargon.`;
 }
 
