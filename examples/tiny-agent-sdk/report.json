@@ -1,0 +1,880 @@
+{
+  "target": "https://github.com/tSLoseth/tiny-agent-sdk",
+  "generatedAt": "2026-09-25T18:25:23.012Z",
+  "mode": "full",
+  "model": "claude-haiku-4-5-20251001",
+  "stats": {
+    "files": 25,
+    "lines": 1094,
+    "languages": {
+      "TypeScript": 1094
+    }
+  },
+  "evidence": [
+    {
+      "id": "ARC-001",
+      "dimension": "architecture",
+      "kind": "languages",
+      "summary": "1,094 lines of code: TypeScript 100%"
+    },
+    {
+      "id": "ARC-002",
+      "dimension": "architecture",
+      "kind": "manifest",
+      "summary": "npm manifest package.json: 3 runtime and 3 dev dependencies",
+      "files": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "QUA-001",
+      "dimension": "code_quality",
+      "kind": "tests",
+      "summary": "15 source files and no test files",
+      "flag": {
+        "severity": "high",
+        "title": "No automated tests",
+        "recommendation": "Introduce a test harness and cover the revenue-critical paths first (characterisation tests before any refactoring).",
+        "effort": "M"
+      }
+    },
+    {
+      "id": "TEAM-001",
+      "dimension": "team_process",
+      "kind": "ci",
+      "summary": "No CI configuration found",
+      "flag": {
+        "severity": "medium",
+        "title": "No CI pipeline",
+        "recommendation": "Add a CI pipeline that builds, tests and scans every change.",
+        "effort": "S"
+      }
+    },
+    {
+      "id": "QUA-002",
+      "dimension": "code_quality",
+      "kind": "lint",
+      "summary": "No linter or formatter configuration found",
+      "flag": {
+        "severity": "low",
+        "title": "No linter or formatter configured",
+        "recommendation": "Adopt a linter and formatter and enforce them in CI.",
+        "effort": "S"
+      }
+    },
+    {
+      "id": "TEAM-002",
+      "dimension": "team_process",
+      "kind": "docs",
+      "summary": "README present (104 lines)",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "SEC-001",
+      "dimension": "security",
+      "kind": "dependency_updates",
+      "summary": "No Dependabot or Renovate configuration found",
+      "flag": {
+        "severity": "low",
+        "title": "No automated dependency updates",
+        "recommendation": "Enable Dependabot or Renovate so security patches arrive as reviewed PRs.",
+        "effort": "S"
+      }
+    },
+    {
+      "id": "CLD-001",
+      "dimension": "cloud_readiness",
+      "kind": "containers",
+      "summary": "No Dockerfile or compose file found",
+      "flag": {
+        "severity": "medium",
+        "title": "Not containerised",
+        "recommendation": "Containerise the services so they can run on any cloud or orchestrator.",
+        "effort": "M"
+      }
+    },
+    {
+      "id": "CLD-002",
+      "dimension": "cloud_readiness",
+      "kind": "iac",
+      "summary": "No infrastructure-as-code or deployment configuration found",
+      "flag": {
+        "severity": "medium",
+        "title": "No infrastructure as code",
+        "recommendation": "Define infrastructure in Terraform/Bicep/CDK so environments can be rebuilt and audited.",
+        "effort": "M"
+      }
+    },
+    {
+      "id": "CLD-003",
+      "dimension": "cloud_readiness",
+      "kind": "config",
+      "summary": "Configuration read from environment variables in 1 files (12-factor)",
+      "files": [
+        "examples/hello.ts"
+      ]
+    },
+    {
+      "id": "TEAM-003",
+      "dimension": "team_process",
+      "kind": "activity",
+      "summary": "3 commits by 1 contributors since 2026-06; 0 in the last 90 days; last commit 116 days ago"
+    },
+    {
+      "id": "TEAM-004",
+      "dimension": "team_process",
+      "kind": "bus_factor",
+      "summary": "Bus factor 1: top contributor authored 100% of commits",
+      "detail": "tSLoseth: 3"
+    },
+    {
+      "id": "READ-001",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected package.json",
+      "files": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "READ-002",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected README.md",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "READ-003",
+      "dimension": "security",
+      "kind": "file_read",
+      "summary": "Inspected package.json",
+      "files": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "READ-004",
+      "dimension": "security",
+      "kind": "file_read",
+      "summary": "Inspected README.md",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "READ-005",
+      "dimension": "code_quality",
+      "kind": "file_read",
+      "summary": "Inspected README.md",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "READ-006",
+      "dimension": "code_quality",
+      "kind": "file_read",
+      "summary": "Inspected package.json",
+      "files": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "READ-007",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/agent.ts",
+      "files": [
+        "src/agent.ts"
+      ]
+    },
+    {
+      "id": "READ-008",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/tools.ts",
+      "files": [
+        "src/tools.ts"
+      ]
+    },
+    {
+      "id": "READ-009",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/session.ts",
+      "files": [
+        "src/session.ts"
+      ]
+    },
+    {
+      "id": "READ-010",
+      "dimension": "security",
+      "kind": "file_read",
+      "summary": "Inspected src/env.ts",
+      "files": [
+        "src/env.ts"
+      ]
+    },
+    {
+      "id": "READ-011",
+      "dimension": "security",
+      "kind": "file_read",
+      "summary": "Inspected examples/hello.ts",
+      "files": [
+        "examples/hello.ts"
+      ]
+    },
+    {
+      "id": "READ-012",
+      "dimension": "security",
+      "kind": "file_read",
+      "summary": "Inspected src/permissions.ts",
+      "files": [
+        "src/permissions.ts"
+      ]
+    },
+    {
+      "id": "READ-013",
+      "dimension": "code_quality",
+      "kind": "file_read",
+      "summary": "Inspected src/agent.ts",
+      "files": [
+        "src/agent.ts"
+      ]
+    },
+    {
+      "id": "READ-014",
+      "dimension": "code_quality",
+      "kind": "file_read",
+      "summary": "Inspected tsconfig.json",
+      "files": [
+        "tsconfig.json"
+      ]
+    },
+    {
+      "id": "READ-015",
+      "dimension": "code_quality",
+      "kind": "search",
+      "summary": "Code search (27-char pattern): 3 matches",
+      "files": [
+        "src/cli.ts",
+        "src/hooks.ts",
+        "src/permissions.ts"
+      ]
+    },
+    {
+      "id": "READ-016",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/permissions.ts",
+      "files": [
+        "src/permissions.ts"
+      ]
+    },
+    {
+      "id": "READ-017",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/hooks.ts",
+      "files": [
+        "src/hooks.ts"
+      ]
+    },
+    {
+      "id": "READ-018",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/cli.ts",
+      "files": [
+        "src/cli.ts"
+      ]
+    },
+    {
+      "id": "READ-019",
+      "dimension": "security",
+      "kind": "search",
+      "summary": "Code search (41-char pattern): 29 matches",
+      "files": [
+        ".env.example",
+        "AGENTS.md",
+        "examples/hello.ts",
+        "README.md",
+        "src/agent.ts",
+        "src/env.ts",
+        "src/permissions.ts",
+        "src/session.ts",
+        "src/subagent.ts"
+      ]
+    },
+    {
+      "id": "READ-020",
+      "dimension": "security",
+      "kind": "file_read",
+      "summary": "Inspected .env.example",
+      "files": [
+        ".env.example"
+      ]
+    },
+    {
+      "id": "READ-021",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/subagent.ts",
+      "files": [
+        "src/subagent.ts"
+      ]
+    },
+    {
+      "id": "READ-022",
+      "dimension": "architecture",
+      "kind": "file_read",
+      "summary": "Inspected src/paths.ts",
+      "files": [
+        "src/paths.ts"
+      ]
+    },
+    {
+      "id": "READ-023",
+      "dimension": "security",
+      "kind": "file_read",
+      "summary": "Inspected .gitignore",
+      "files": [
+        ".gitignore"
+      ]
+    },
+    {
+      "id": "READ-024",
+      "dimension": "cloud_readiness",
+      "kind": "file_read",
+      "summary": "Inspected package.json",
+      "files": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "READ-025",
+      "dimension": "cloud_readiness",
+      "kind": "file_read",
+      "summary": "Inspected README.md",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "READ-026",
+      "dimension": "cloud_readiness",
+      "kind": "file_read",
+      "summary": "Inspected .env.example",
+      "files": [
+        ".env.example"
+      ]
+    },
+    {
+      "id": "READ-027",
+      "dimension": "team_process",
+      "kind": "file_read",
+      "summary": "Inspected README.md",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "READ-028",
+      "dimension": "team_process",
+      "kind": "file_read",
+      "summary": "Inspected package.json",
+      "files": [
+        "package.json"
+      ]
+    },
+    {
+      "id": "READ-029",
+      "dimension": "cloud_readiness",
+      "kind": "file_read",
+      "summary": "Inspected src/env.ts",
+      "files": [
+        "src/env.ts"
+      ]
+    },
+    {
+      "id": "READ-030",
+      "dimension": "cloud_readiness",
+      "kind": "file_read",
+      "summary": "Inspected tsconfig.json",
+      "files": [
+        "tsconfig.json"
+      ]
+    },
+    {
+      "id": "READ-031",
+      "dimension": "cloud_readiness",
+      "kind": "search",
+      "summary": "Code search (66-char pattern): 1 matches",
+      "files": [
+        "examples/stage5.ts"
+      ]
+    },
+    {
+      "id": "READ-032",
+      "dimension": "team_process",
+      "kind": "search",
+      "summary": "Code search (19-char pattern): 1 matches",
+      "files": [
+        "package-lock.json"
+      ]
+    },
+    {
+      "id": "READ-033",
+      "dimension": "team_process",
+      "kind": "file_read",
+      "summary": "Inspected AGENTS.md",
+      "files": [
+        "AGENTS.md"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "title": "Critical bus factor: single contributor, no recent activity",
+      "dimension": "team_process",
+      "severity": "critical",
+      "description": "The repository has only 1 contributor who authored 100% of the 3 commits, with the last commit 116 days ago and zero activity in the last 90 days. This creates extreme key-person risk: there is no backup knowledge holder, no code review discipline, and no active development pipeline. For a learning project this may be acceptable, but if this asset is intended for ongoing use or maintenance post-acquisition, the lack of team depth and recent activity signals abandonment risk.",
+      "evidenceIds": [
+        "TEAM-003",
+        "TEAM-004"
+      ],
+      "recommendation": "Before close, clarify the intended role of this asset: if it is to be maintained or extended, establish a transition plan with the original author to document critical decisions, onboard a second maintainer, and establish a regular commit cadence. If it is a reference implementation or learning tool only, document that explicitly and set expectations accordingly.",
+      "effort": "M"
+    },
+    {
+      "title": "No automated tests in a learning SDK with public API surface",
+      "dimension": "code_quality",
+      "severity": "high",
+      "description": "The repository contains 15 source files (1,094 lines of TypeScript) with zero test files. The codebase exports a public API (runAgent, runAgentStream, Tool, Session, etc.) documented in README.md and demonstrated across 6 example files. Without tests, regressions in core abstractions (the agent loop, tool dispatch, permission policy, streaming) cannot be caught. For a learning project intended to be read and understood, tests would also serve as executable documentation of expected behavior.",
+      "evidenceIds": [
+        "QUA-001",
+        "READ-005",
+        "READ-006",
+        "READ-013"
+      ],
+      "recommendation": "Add a test suite covering the core loop (runAgent/runAgentStream), tool dispatch, permission policy verdicts, and hook execution. Start with unit tests for the agent loop and permission logic; integration tests for the examples are lower priority. Use vitest or jest; aim for >70% coverage of src/.",
+      "effort": "M"
+    },
+    {
+      "title": "No CI/CD pipeline or automated quality gates",
+      "dimension": "team_process",
+      "severity": "high",
+      "description": "There is no CI configuration (GitHub Actions, GitLab CI, or equivalent) to run builds, tests, or linting on commits. Combined with the absence of automated tests (QUA-001), this means code changes have no automated validation before merge. For a TypeScript project with 1,094 lines of code and external dependencies, this creates risk of silent regressions and makes onboarding new contributors difficult.",
+      "evidenceIds": [
+        "TEAM-001",
+        "QUA-001",
+        "ARC-001"
+      ],
+      "recommendation": "Implement a basic CI pipeline (GitHub Actions or equivalent) that runs `npm run build` and any test suite on every commit. Even for a learning project, this establishes a quality baseline and makes the codebase safer to extend. Effort is low (S) if tests are added first; currently blocked by lack of tests.",
+      "effort": "M"
+    },
+    {
+      "title": "Runtime tool discovery by string name creates type-safety gap",
+      "dimension": "architecture",
+      "severity": "medium",
+      "description": "Tools are stored in arrays and discovered at runtime by string name (dispatchTool in tools.ts). A typo in a tool name, a missing tool, or a mismatch between what the model requests and what is available will only be caught at runtime, after the model has already been called. There is no compile-time or early-validation check that the tool set is complete or that tool names are consistent across the codebase.",
+      "evidenceIds": [
+        "READ-008",
+        "READ-007"
+      ],
+      "recommendation": "Consider a tool registry pattern: define tools as a const object keyed by name (e.g. `const tools = { read_file: {...}, write_file: {...} }`) and derive the array from it. This makes tool names part of the type system and catches typos at compile time. Alternatively, use a discriminated union type for tool calls to ensure the model's requests are type-checked.",
+      "effort": "M"
+    },
+    {
+      "title": "Tight coupling to Anthropic SDK types limits provider portability",
+      "dimension": "architecture",
+      "severity": "medium",
+      "description": "The codebase exposes Anthropic SDK types throughout: RunAgentOptions takes `Anthropic.MessageParam[]`, toAnthropicTools returns `Anthropic.Tool[]`, and Session stores `Anthropic.MessageParam[]` directly. Swapping to a different LLM provider (OpenAI, Gemini, etc.) would require changes across agent.ts, session.ts, tools.ts, and the CLI. The README explicitly states this is not a multi-provider abstraction, but the tight coupling makes it harder to extend or adapt.",
+      "evidenceIds": [
+        "READ-007",
+        "READ-008",
+        "READ-009",
+        "READ-002"
+      ],
+      "recommendation": "Define a thin abstraction layer for message and tool types (e.g. `type Message = { role: 'user' | 'assistant'; content: string | ToolCall[] }`) and map to/from Anthropic types at the boundary. This is a medium-effort refactor but would make the core logic provider-agnostic and easier to test.",
+      "effort": "M"
+    },
+    {
+      "title": "Tight coupling between CLI and core agent logic",
+      "dimension": "code_quality",
+      "severity": "medium",
+      "description": "The CLI (src/cli.ts, 153 lines) directly instantiates Session, manages the REPL loop, and handles permissions/hooks inline. This couples the command-line interface to the SDK's core abstractions, making it harder to reuse the agent loop in other contexts (e.g., HTTP service, batch runner) without duplicating logic. The agent loop itself (src/agent.ts) is well-factored, but the CLI layer mixes concerns.",
+      "evidenceIds": [
+        "READ-013"
+      ],
+      "recommendation": "Extract a thin 'agent runner' abstraction that encapsulates Session lifecycle, REPL state, and hook/policy setup. The CLI should delegate to this runner, not manage it directly. This will make the SDK easier to embed in other frontends.",
+      "effort": "M"
+    },
+    {
+      "title": "Minimal error handling and no structured logging",
+      "dimension": "code_quality",
+      "severity": "medium",
+      "description": "Error handling is sparse: tool execution failures are fed back to the model as error results (good for agent self-correction), but unexpected errors (e.g., API failures, permission policy exceptions) are not caught or logged. The optional `log` callback is a string-based progress reporter, not a structured logger. For a learning project this is acceptable, but it limits observability and makes debugging harder.",
+      "evidenceIds": [
+        "READ-013"
+      ],
+      "recommendation": "Add try-catch blocks around API calls and tool dispatch. Introduce a simple structured logger (or accept a logger interface in RunAgentOptions) to emit events (start, end, error, permission-denied) with context. This will improve debuggability without adding heavy dependencies.",
+      "effort": "M"
+    },
+    {
+      "title": "Inactive repository with single-person bus factor",
+      "dimension": "code_quality",
+      "severity": "medium",
+      "description": "The repository has 3 commits by 1 contributor since June 2026, with 0 commits in the last 90 days (last commit 116 days ago). The README explicitly states this is a learning project not published to npm, but the lack of activity and single-person authorship create risk if the asset is to be maintained or extended post-acquisition. There is no CI pipeline (TEAM-001) to catch regressions if new contributors join.",
+      "evidenceIds": [
+        "TEAM-003",
+        "TEAM-004",
+        "TEAM-001"
+      ],
+      "recommendation": "If this asset is to be maintained, establish a CI pipeline (GitHub Actions or similar) to run tests and linting on every commit. Document the development setup in CONTRIBUTING.md. Plan for knowledge transfer to the acquiring team; the current author should pair with new maintainers on at least one feature or bug fix.",
+      "effort": "M"
+    },
+    {
+      "title": "No automated dependency updates configured",
+      "dimension": "security",
+      "severity": "medium",
+      "description": "The project has no Dependabot, Renovate, or equivalent automation to detect and update vulnerable dependencies. With 3 runtime dependencies (@anthropic-ai/sdk, zod, zod-to-json-schema) and 3 dev dependencies, the project relies on manual review. The Anthropic SDK in particular is a third-party integration that may receive security patches.",
+      "evidenceIds": [
+        "SEC-001",
+        "READ-003"
+      ],
+      "recommendation": "Enable Dependabot (GitHub native) or Renovate to automatically open pull requests for dependency updates. Configure to auto-merge patch-level updates after CI passes, and require manual review for minor/major versions.",
+      "effort": "S"
+    },
+    {
+      "title": "Path traversal defense is layered but relies on custom validation",
+      "dimension": "security",
+      "severity": "medium",
+      "description": "The permissions layer (src/permissions.ts) enforces workspace-root scoping for file operations, and the README notes 'defense in depth' with both policy and tool-level checks. However, the path validation logic is custom-built (isInside function in src/paths.ts) rather than using a battle-tested library. Custom path logic is a common source of traversal bugs, especially across OS boundaries (Windows vs. Unix path separators).",
+      "evidenceIds": [
+        "READ-012",
+        "READ-004"
+      ],
+      "recommendation": "Replace the custom isInside() implementation with a well-tested library such as `path-is-inside` or Node's built-in `path.resolve()` + string comparison. Add unit tests for edge cases: `../`, `..\\`, symlinks, and absolute paths. Verify behavior on both Windows and Unix.",
+      "effort": "M"
+    },
+    {
+      "title": "No secrets scanning or pre-commit hooks to prevent accidental key commits",
+      "dimension": "security",
+      "severity": "medium",
+      "description": "While .gitignore excludes .env files, there is no pre-commit hook (e.g., via husky or git-secrets) to catch accidental commits of API keys or other secrets. A developer could bypass .gitignore or commit a secret to a different file by mistake.",
+      "evidenceIds": [
+        "READ-023",
+        "TEAM-001"
+      ],
+      "recommendation": "Add a pre-commit hook using `husky` and `lint-staged` to run `git-secrets` or `truffleHog` before commits. Alternatively, configure GitHub's native secret scanning. Document the setup in CONTRIBUTING.md.",
+      "effort": "S"
+    },
+    {
+      "title": "No containerisation or deployment infrastructure",
+      "dimension": "cloud_readiness",
+      "severity": "medium",
+      "description": "The asset is a learning-focused TypeScript SDK with no Dockerfile, Docker Compose, or any infrastructure-as-code (Terraform, CloudFormation, Helm, etc.). While the README explicitly states this is not a production runtime and lists HTTP/service API as a non-goal, deployment to cloud environments would require building containerisation and infrastructure from scratch. For a library or CLI tool of this size (1,094 lines), this is expected, but it means any buyer planning to operationalise it as a service would face non-trivial effort.",
+      "evidenceIds": [
+        "CLD-001",
+        "CLD-002",
+        "READ-025"
+      ],
+      "recommendation": "If the asset is to be deployed as a service (not just consumed as a library), create a Dockerfile with Node 20+ base, multi-stage build for TypeScript compilation, and a docker-compose.yml for local development. Add a basic Terraform or CloudFormation template for cloud deployment. Effort is low-to-medium for a simple service wrapper.",
+      "effort": "M"
+    },
+    {
+      "title": "No observability or logging infrastructure",
+      "dimension": "cloud_readiness",
+      "severity": "medium",
+      "description": "The codebase has no structured logging, metrics, or tracing. The PostToolUse hook (mentioned in README as a lightweight audit stand-in) is present but there is no integration with observability platforms (CloudWatch, Datadog, Prometheus, etc.). For a learning project this is acceptable, but operationalising this as a service would require adding logging, error tracking, and performance monitoring.",
+      "evidenceIds": [
+        "READ-025",
+        "ARC-001"
+      ],
+      "recommendation": "Add structured logging (e.g., pino or winston) with JSON output for cloud-native environments. Instrument the agent loop (src/agent.ts) to emit start/end events and tool execution metrics. Consider adding OpenTelemetry for distributed tracing if subagent delegation is used in production.",
+      "effort": "M"
+    },
+    {
+      "title": "No health checks or graceful shutdown handling",
+      "dimension": "cloud_readiness",
+      "severity": "medium",
+      "description": "The CLI (src/cli.ts) and examples are designed for interactive or one-shot execution. There is no HTTP health endpoint, readiness probe, or graceful shutdown handler. If this asset is wrapped as a service, Kubernetes or container orchestrators would have no way to determine liveness or drain connections cleanly during rolling updates.",
+      "evidenceIds": [
+        "READ-025",
+        "ARC-001"
+      ],
+      "recommendation": "If deploying as a service, add a simple HTTP health endpoint (e.g., GET /health returning 200 OK) and implement SIGTERM handling to finish in-flight agent runs before exiting. For Kubernetes, define liveness and readiness probes in the deployment manifest.",
+      "effort": "S"
+    },
+    {
+      "title": "No onboarding or runbook for operational handoff",
+      "dimension": "team_process",
+      "severity": "medium",
+      "description": "While the README covers quickstart and design, there is no CONTRIBUTING.md, DEVELOPMENT.md, or runbook documenting how to set up a development environment, run the full test suite (which does not exist), debug common issues, or cut a release. The package.json has build and dev scripts, but no guidance on the development workflow, code review process, or deployment procedure. This makes it difficult for a new team to take over maintenance.",
+      "evidenceIds": [
+        "READ-028",
+        "TEAM-002"
+      ],
+      "recommendation": "Create a DEVELOPMENT.md file covering: (1) local setup steps beyond npm install; (2) how to run examples and verify they work; (3) debugging tips; (4) code style and naming conventions (currently implicit); (5) how to add a new tool or hook. Keep it concise but complete enough for a junior developer to be productive within a day.",
+      "effort": "S"
+    },
+    {
+      "title": "No extension mechanism for tool composition or middleware",
+      "dimension": "architecture",
+      "severity": "low",
+      "description": "Tools are passed as flat arrays; there is no registry, plugin system, or middleware pattern for composing, wrapping, or dynamically loading tools. Adding a feature like tool caching, retry logic, or cost tracking would require modifying the core agent loop or tool dispatch logic. The hook system (PreToolUse, PostToolUse) provides some extensibility for observation and blocking, but not for transformation or composition.",
+      "evidenceIds": [
+        "READ-008",
+        "READ-007"
+      ],
+      "recommendation": "For a learning project, this is acceptable. If the codebase grows to support plugins or dynamic tool loading, introduce a ToolRegistry class and a ToolMiddleware pattern (similar to Express middleware) to allow wrapping and composing tools without modifying the core loop.",
+      "effort": "M"
+    },
+    {
+      "title": "Session state is in-memory only; persistence is synchronous and non-transactional",
+      "dimension": "architecture",
+      "severity": "low",
+      "description": "Session state is the messages array, held in memory. The save/load methods use synchronous file I/O (writeFileSync, readFileSync). There is no async persistence, no transaction semantics, and no conflict resolution for concurrent sessions. If two sessions try to load and save the same file, the last write wins. For a learning project or single-user CLI, this is fine; for a service, it would be a bottleneck.",
+      "evidenceIds": [
+        "READ-009"
+      ],
+      "recommendation": "For the current scope (learning project, CLI tool), no change is needed. If this evolves into a service, introduce an async PersistenceLayer interface (load/save/delete) and support pluggable backends (file, database, cloud storage). Add optimistic locking or version numbers to detect concurrent modifications.",
+      "effort": "M"
+    },
+    {
+      "title": "No error recovery, retry logic, or graceful degradation for API failures",
+      "dimension": "architecture",
+      "severity": "low",
+      "description": "The agent loop calls the Anthropic API directly with no retry logic, exponential backoff, or circuit breaker. If the API is temporarily unavailable or rate-limited, the call fails immediately and the error is fed back to the model. There is no mechanism to pause, retry, or gracefully degrade. For a learning project, this is acceptable; for production use, it would be a gap.",
+      "evidenceIds": [
+        "READ-007"
+      ],
+      "recommendation": "For the current scope, no change is needed. If this becomes a service, wrap the API call in a retry utility (e.g. exponential backoff with jitter) and add a circuit breaker to prevent cascading failures. Consider adding a timeout and a fallback response.",
+      "effort": "M"
+    },
+    {
+      "title": "No linter or code formatter configured",
+      "dimension": "code_quality",
+      "severity": "low",
+      "description": "The repository has no ESLint, Prettier, or similar configuration. TypeScript strict mode is enabled (tsconfig.json), which catches type errors, but style consistency, unused variables, and common pitfalls are not enforced. For a learning project meant to be read, this is a minor gap; for a production SDK or team collaboration, it would be higher priority.",
+      "evidenceIds": [
+        "QUA-002",
+        "READ-014"
+      ],
+      "recommendation": "Add ESLint with a standard config (e.g., eslint-config-prettier) and Prettier. Include in the build script and CI (once added). This is a low-effort hygiene win.",
+      "effort": "S"
+    },
+    {
+      "title": "No dependency update automation",
+      "dimension": "code_quality",
+      "severity": "low",
+      "description": "The project has 3 runtime dependencies (@anthropic-ai/sdk, zod, zod-to-json-schema) and 3 dev dependencies, but no Dependabot or Renovate configuration. The Anthropic SDK is pinned to ^0.32.0, which will accept minor/patch updates but not major versions. For a learning project with infrequent updates (last commit 116 days ago), this is low risk, but it means security patches may be missed.",
+      "evidenceIds": [
+        "SEC-001",
+        "READ-006"
+      ],
+      "recommendation": "Add a Dependabot or Renovate config to automate dependency updates. For a learning project, weekly or monthly checks are sufficient. This is a low-effort security hygiene step.",
+      "effort": "S"
+    },
+    {
+      "title": "Secrets handling is well-designed but .env file not encrypted",
+      "dimension": "security",
+      "severity": "low",
+      "description": "The project correctly avoids hardcoding the Anthropic API key and uses environment variables via a custom .env loader (src/env.ts). The .gitignore properly excludes .env and .env.* files, and documentation warns against committing real keys. However, the .env file itself is stored in plaintext on disk with no encryption at rest, which is acceptable for a learning project but would be a concern in production.",
+      "evidenceIds": [
+        "READ-010",
+        "READ-011",
+        "READ-020",
+        "READ-023"
+      ],
+      "recommendation": "For this learning project, the current approach is appropriate. If deployed to production, use a secrets manager (AWS Secrets Manager, HashiCorp Vault, or similar) instead of .env files. Document this transition path in the README.",
+      "effort": "S"
+    },
+    {
+      "title": "No supply-chain risk mitigation for npm dependencies",
+      "dimension": "security",
+      "severity": "low",
+      "description": "The project uses npm with a package-lock.json but has no npm audit automation, no lockfile verification in CI, and no policy for handling transitive dependencies. The Anthropic SDK is a critical dependency for API communication, and any compromise could expose API keys or intercept model responses.",
+      "evidenceIds": [
+        "READ-003",
+        "ARC-002"
+      ],
+      "recommendation": "Add `npm audit` to the build pipeline (once CI is set up). Consider using npm's `--audit-level=moderate` to fail on moderate or higher vulnerabilities. Periodically review transitive dependencies with `npm ls` and document any known risks. For production use, consider npm provenance verification.",
+      "effort": "S"
+    },
+    {
+      "title": "Environment variable loading tolerates quoted keys, increasing parsing risk",
+      "dimension": "security",
+      "severity": "low",
+      "description": "The custom .env loader (src/env.ts) strips wrapping quotes from both keys and values to handle workspace conventions. While this is pragmatic for a learning project, it introduces a non-standard parsing behavior that could mask typos (e.g., `\"ANTHROPIC_API_KEY\"=value` would be stored as `ANTHROPIC_API_KEY` instead of failing). This increases the risk of misconfiguration in production.",
+      "evidenceIds": [
+        "READ-010"
+      ],
+      "recommendation": "Document this behavior clearly in code comments and README. For production, migrate to Node's native `--env-file` flag (Node 20.10+) or the `dotenv` package, which follow standard conventions. Add validation to ensure ANTHROPIC_API_KEY is set and non-empty before the SDK is initialized.",
+      "effort": "S"
+    },
+    {
+      "title": "12-factor configuration partially implemented",
+      "dimension": "cloud_readiness",
+      "severity": "low",
+      "description": "The asset reads ANTHROPIC_API_KEY from environment variables (via src/env.ts), following 12-factor principles. However, the custom .env loader (READ-029) is hand-rolled to avoid dependencies, which is pragmatic for a learning project but adds maintenance burden. The loader walks up the directory tree to find .env, which could cause unexpected behaviour in monorepo or containerised contexts where the working directory is not the project root.",
+      "evidenceIds": [
+        "CLD-003",
+        "READ-026",
+        "READ-029"
+      ],
+      "recommendation": "For production use, consider adopting the standard `dotenv` package or Node's built-in `--env-file` flag (Node 20.10+). If hand-rolling is preferred, document the directory-walk behaviour and add a test to ensure it works correctly in containerised environments where cwd may differ from project root.",
+      "effort": "S"
+    },
+    {
+      "title": "Excellent modular architecture with clear separation of concerns",
+      "dimension": "architecture",
+      "severity": "info",
+      "description": "The codebase demonstrates strong architectural discipline: each concept (agent loop, tools, session state, permissions, hooks, subagents) is isolated in its own small, readable file with a single responsibility. The agent loop is implemented once as an async generator (runAgentStream) and reused by a blocking front door (runAgent), eliminating duplication. Tool validation uses zod for both schema definition and runtime safety. The permission policy is a pure function, and hooks are injected as arrays, making the system composable and testable.",
+      "evidenceIds": [
+        "READ-007",
+        "READ-008",
+        "READ-009",
+        "READ-016",
+        "READ-017",
+        "READ-021",
+        "READ-002"
+      ],
+      "recommendation": "This is a strength. Maintain this modularity as the codebase grows; resist the temptation to merge files or add cross-cutting logic outside the hook/policy system.",
+      "effort": "S"
+    },
+    {
+      "title": "Clear design boundaries and explicit non-goals support maintainability",
+      "dimension": "architecture",
+      "severity": "info",
+      "description": "The README explicitly lists what the SDK is NOT (multi-provider, durable persistence, execution-trace store, HTTP service, approval queue, context compaction, parallel fan-out, npm packaging). This clarity of scope makes the codebase easier to understand and maintain. The design notes explain the key decisions (one loop, two front doors; errors fed back; defense in depth; subagents as Sessions). This is a strength for a learning project.",
+      "evidenceIds": [
+        "READ-002"
+      ],
+      "recommendation": "Maintain this clarity as the codebase evolves. If new features are added, update the design boundaries section to reflect the new scope. This helps future maintainers understand what is in and out of scope.",
+      "effort": "S"
+    },
+    {
+      "title": "Well-structured core abstractions and clear separation of concerns",
+      "dimension": "code_quality",
+      "severity": "info",
+      "description": "The SDK demonstrates strong architectural discipline: the agent loop (runAgentStream) is a single, reusable async generator; tools are defined via Zod schemas and dispatched through a type-safe interface; permissions and hooks are pluggable policies; sessions encapsulate multi-turn state; subagents reuse the loop with isolated context. Each concept lives in its own file (agent.ts, tools.ts, permissions.ts, hooks.ts, session.ts, subagent.ts) with clear responsibilities. The README explicitly documents design boundaries and non-goals, showing intentional scope.",
+      "evidenceIds": [
+        "READ-005",
+        "READ-013"
+      ],
+      "recommendation": "Maintain this discipline as the codebase grows. The modular structure is a strength; document it in CONTRIBUTING.md to guide future contributors.",
+      "effort": "S"
+    },
+    {
+      "title": "Minimal but sound permission model for tool execution",
+      "dimension": "security",
+      "severity": "info",
+      "description": "The permission system (src/permissions.ts) implements a three-tier decision model (allow/deny/ask) that mirrors Claude Code's approach. File operations are scoped to a workspace root, and arbitrary commands require human confirmation. This is a well-reasoned design for an agent SDK that executes code on behalf of a user.",
+      "evidenceIds": [
+        "READ-012",
+        "READ-004"
+      ],
+      "recommendation": "This design is a strength. As the project matures, consider documenting the threat model and permission policy in a SECURITY.md file for users who may integrate this SDK into larger systems.",
+      "effort": "S"
+    },
+    {
+      "title": "Minimal runtime dependencies and clean build output",
+      "dimension": "cloud_readiness",
+      "severity": "info",
+      "description": "The asset has only 3 runtime dependencies (@anthropic-ai/sdk, zod, zod-to-json-schema) and 3 dev dependencies, with a clean TypeScript build configuration (ES2022 target, Node16 module resolution). The package.json declares `\"type\": \"module\"` for ESM, and tsconfig.json outputs to `dist/` with no source maps or declarations, keeping the deployment footprint small. This is well-suited for containerisation and cloud deployment.",
+      "evidenceIds": [
+        "READ-024",
+        "READ-030",
+        "ARC-002"
+      ],
+      "recommendation": "Maintain this lean dependency profile. When containerising, use a Node 20 slim base image and multi-stage build to exclude devDependencies from the final image. The small footprint will keep container image size and cold-start latency low.",
+      "effort": "S"
+    },
+    {
+      "title": "Good documentation and clear learning-first design",
+      "dimension": "team_process",
+      "severity": "info",
+      "description": "The repository includes a comprehensive README (104 lines) with quickstart, design notes, and clear boundaries; a detailed AGENTS.md file for orientation; and well-structured examples (6 runnable stage demos). The code is organized into small, single-responsibility files (agent.ts, tools.ts, session.ts, etc.) with minimal dependencies. This is a well-documented learning project that prioritizes clarity and readability, making it relatively easy for a new team member to understand the architecture and intent.",
+      "evidenceIds": [
+        "TEAM-002",
+        "READ-027",
+        "READ-033",
+        "ARC-002"
+      ],
+      "recommendation": "Preserve this documentation quality during any extension or maintenance. Use the existing file structure and naming conventions as a template for new features. Consider adding a CONTRIBUTING.md if the project is to accept external contributions.",
+      "effort": "S"
+    }
+  ],
+  "droppedFindings": 0,
+  "scores": [
+    {
+      "dimension": "architecture",
+      "score": 82,
+      "rag": "green",
+      "findingCount": 7
+    },
+    {
+      "dimension": "code_quality",
+      "score": 63,
+      "rag": "amber",
+      "findingCount": 7
+    },
+    {
+      "dimension": "security",
+      "score": 76,
+      "rag": "amber",
+      "findingCount": 7
+    },
+    {
+      "dimension": "cloud_readiness",
+      "score": 80,
+      "rag": "green",
+      "findingCount": 5
+    },
+    {
+      "dimension": "team_process",
+      "score": 44,
+      "rag": "red",
+      "findingCount": 4
+    }
+  ],
+  "overall": {
+    "score": 69,
+    "rag": "red"
+  },
+  "summary": {
+    "headline": "Solid learning SDK with strong architecture but critical team and process gaps that must be resolved before close: single-person maintenance, no tests, and no CI/CD pipeline create unacceptable operational risk.",
+    "redFlags": [
+      "Bus factor of one with no recent activity—clarify intended role and establish transition plan with original author before close",
+      "No automated test suite for a public API surface—high risk for regressions and maintenance",
+      "No CI/CD pipeline or quality gates—no safety net for future development or contributor onboarding",
+      "Custom path traversal validation—replace with battle-tested library and add comprehensive edge-case tests"
+    ],
+    "valueLevers": [
+      "Add test suite (>70% coverage) covering agent loop, tool dispatch, and permission logic—enables safe extension and reduces maintenance burden",
+      "Implement CI/CD pipeline with automated builds and tests—establishes quality baseline and makes onboarding new maintainers feasible",
+      "Extract agent runner abstraction and define provider-agnostic message types—decouples from Anthropic SDK and enables multi-provider support",
+      "Add structured logging and observability hooks—critical for production deployment and debugging in cloud environments",
+      "Create DEVELOPMENT.md and operational runbook—reduces onboarding time and documents implicit conventions"
+    ],
+    "hundredDayPlan": [
+      "Days 1–14: Conduct knowledge transfer with original author; document critical design decisions, tool registration patterns, and hook/policy system. Establish single point of contact for questions.",
+      "Days 15–30: Build test suite for core agent loop (runAgent/runAgentStream), tool dispatch, and permission verdicts using vitest; target >70% coverage of src/.",
+      "Days 31–45: Set up GitHub Actions CI pipeline to run build and tests on every commit; add ESLint and Prettier for code quality gates.",
+      "Days 46–60: Replace custom path traversal validation with path-is-inside library; add unit tests for Windows/Unix edge cases (../, symlinks, absolute paths).",
+      "Days 61–75: Add structured logging (pino or winston) to agent loop; emit start/end and tool execution events with context for debuggability.",
+      "Days 76–100: Write DEVELOPMENT.md covering setup, examples, debugging, code style, and how to add tools/hooks; enable Dependabot for automated dependency updates; document secrets handling and production transition path."
+    ]
+  },
+  "usage": {
+    "inputTokens": 124805,
+    "outputTokens": 10628,
+    "costUsd": 0.17794500000000002
+  }
+}
