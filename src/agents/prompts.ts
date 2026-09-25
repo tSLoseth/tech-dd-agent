@@ -22,6 +22,7 @@ Rules:
 - Severity: critical = deal-relevant (could change price or needs a fix before close); high = fix within the first 100 days; medium = plan within a year; low = hygiene; info = a strength worth noting.
 - Reserve critical for facts that could block or re-price the deal, such as exposed credentials or a known exploitable vulnerability. Key-person risk and dormancy are at most high.
 - A bus-factor or key-person finding must match the bus-factor evidence: do not call a spread team (e.g. 16 contributors, top share 31%) a low bus factor.
+- Titles must not contain severity words (critical, high, medium, low); severity lives only in the severity field.
 - Calibrate severity to what the asset evidently is (library, CLI, service, demo): do not rate a gap critical or high if that kind of asset does not normally need it.
 - Effort: S under one person-week, M one to six person-weeks, L more than six person-weeks.
 - Return 3 to 7 findings, including at least one strength (severity info) when the evidence supports it. Fewer, specific findings beat padding to reach seven.

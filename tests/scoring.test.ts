@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { EvidenceLedger } from "../src/evidence.js";
 import {
-  dedupeAcrossDimensions, groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings,
+  combineFindings, dedupeAcrossDimensions, groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings,
 } from "../src/scoring.js";
 import type { Finding } from "../src/types.js";
 
@@ -80,10 +80,29 @@ describe("dedupeAcrossDimensions", () => {
     expect(dedupeAcrossDimensions([offLane], ledger)).toEqual([offLane]);
   });
 
+  it("keeps exactly one of two findings that cite each other's scanner evidence", () => {
+    const sec = f({ title: "Sec", dimension: "security", evidenceIds: ["SEC-001", "TEAM-001"] });
+    const team = f({ title: "Team", dimension: "team_process", evidenceIds: ["TEAM-001", "SEC-001"] });
+    expect(dedupeAcrossDimensions([sec, team], ledger)).toEqual([team]);
+  });
+
   it("leaves findings citing only READ evidence untouched", () => {
     const a = f({ title: "A", dimension: "security", evidenceIds: ["READ-001"] });
     const b = f({ title: "B", dimension: "code_quality", evidenceIds: ["READ-001"] });
     expect(dedupeAcrossDimensions([a, b], ledger)).toEqual([a, b]);
+  });
+});
+
+describe("combineFindings", () => {
+  it("applies the rule floor after dedupe so a flagged critical cannot be removed", () => {
+    const ledger = new EvidenceLedger();
+    ledger.add({ dimension: "team_process", kind: "activity", summary: "dormant" }); // TEAM-001
+    const secret = ledger.add({ dimension: "security", kind: "secrets", summary: "1 secret", flag: { severity: "critical", title: "Secrets", recommendation: "Rotate", effort: "S" } }); // SEC-001
+    const security = f({ title: "Leaked key", severity: "medium", evidenceIds: [secret.id, "TEAM-001"] });
+    const team = f({ title: "Dormant", dimension: "team_process", evidenceIds: ["TEAM-001"] });
+    const combined = combineFindings(ruleFindings(ledger.all()), [security, team], ledger);
+    expect(combined).toContainEqual(expect.objectContaining({ dimension: "security", severity: "critical", evidenceIds: [secret.id] }));
+    expect(combined).toContainEqual(team);
   });
 });
 

@@ -45,15 +45,24 @@ export function mergeFindings(rule: Finding[], model: Finding[]): Finding[] {
 }
 
 // A finding that cites another dimension's scanner evidence is dropped when that dimension already reports it,
-// so one fact (e.g. dormancy) is not penalised in several dimensions.
+// so one fact (e.g. dormancy) is not penalised in several dimensions. Only findings not yet dropped count as the
+// owner's coverage, so two findings citing each other's evidence do not both disappear.
 export function dedupeAcrossDimensions(findings: Finding[], ledger: EvidenceLedger): Finding[] {
-  return findings.filter((finding) =>
-    !finding.evidenceIds.some((id) => {
+  const kept = new Set(findings);
+  for (const finding of findings) {
+    const offLane = finding.evidenceIds.some((id) => {
       const e = ledger.get(id);
       if (!e || e.id.startsWith("READ-") || e.dimension === finding.dimension) return false;
-      return findings.some((o) => o !== finding && o.dimension === e.dimension && o.evidenceIds.includes(id));
-    }),
-  );
+      return [...kept].some((o) => o !== finding && o.dimension === e.dimension && o.evidenceIds.includes(id));
+    });
+    if (offLane) kept.delete(finding);
+  }
+  return findings.filter((f) => kept.has(f));
+}
+
+// Dedupe first, rule floor last: a critical/high scanner flag can never be removed by the dedupe.
+export function combineFindings(rule: Finding[], model: Finding[], ledger: EvidenceLedger): Finding[] {
+  return mergeFindings(rule, dedupeAcrossDimensions(model, ledger));
 }
 
 export function sortFindings(findings: Finding[]): Finding[] {

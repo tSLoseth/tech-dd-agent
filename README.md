@@ -17,9 +17,9 @@ flowchart LR
     S --> L[(Evidence ledger)]
     L --> A[5 specialist agents<br/>list_files / read_file / grep]
     A -->|findings cite evidence IDs| G[Grounding<br/>drop uncited findings]
-    G --> F[Rule floor<br/>merge scanner flags]
-    F --> D[Cross-dimension dedupe]
-    D --> SC[Deterministic scoring]
+    G --> D[Cross-dimension dedupe]
+    D --> F[Rule floor<br/>merge scanner flags]
+    F --> SC[Deterministic scoring]
     SC --> SY[Synthesis agent<br/>summary, red flags, 100-day plan]
     SY --> R[Report: HTML / Markdown / JSON]
     L -.->|offline mode, no LLM| F
@@ -29,7 +29,7 @@ The design keeps the language model on a short leash. Three mechanisms make the 
 
 1. **Evidence ledger and mandatory citations.** Every scanner result and every file the agents read or search gets an ID (`SEC-001`, `READ-014`, ...). A finding must cite at least one ID. Findings whose citations all fail to resolve are dropped and unknown IDs are stripped, so an invented citation cannot reach the page. Dropped findings are counted in the report.
 2. **Rule floor for critical and high facts.** Scanner flags of severity critical or high (a committed secret, no tests at all, a key-person dependency) always become findings, whatever the model says. The model can raise their severity, never remove them.
-3. **Cross-dimension dedupe and deterministic scoring.** A single fact should cost points once. If a finding cites scanner evidence owned by another dimension (say, a security finding citing the dormancy signal) and that dimension already has a finding on the same evidence, the off-lane finding is dropped. Scanner flags only strengthen a model finding in their own dimension. The model rates severity; code does the arithmetic. Each dimension starts at 100 and loses 35 / 15 / 6 / 2 / 0 points per critical / high / medium / low / info finding. Green is 80 or above, amber 55 or above, otherwise red. **Any critical finding makes the rating red regardless of the numeric score**, for a dimension and for the overall rating. The overall score is the rounded mean of the five dimensions.
+3. **Cross-dimension dedupe and deterministic scoring.** A single fact should cost points once. If a finding cites scanner evidence owned by another dimension (say, a security finding citing the dormancy signal) and that dimension already has a finding on the same evidence, the off-lane finding is dropped. The dedupe runs before the rule floor, so it can never remove a flagged critical or high fact, and scanner flags only strengthen a model finding in their own dimension. The model rates severity; code does the arithmetic. Each dimension starts at 100 and loses 35 / 15 / 6 / 2 / 0 points per critical / high / medium / low / info finding. Green is 80 or above, amber 55 or above, otherwise red. **Any critical finding makes the rating red regardless of the numeric score**, for a dimension and for the overall rating. The overall score is the rounded mean of the five dimensions.
 
 ## Dimensions and DD workstreams
 
