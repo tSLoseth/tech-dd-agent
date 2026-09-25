@@ -34,7 +34,7 @@ export function groundFindings(findings: Finding[], ledger: EvidenceLedger): { k
 export function mergeFindings(rule: Finding[], model: Finding[]): Finding[] {
   const out = model.map((f) => ({ ...f }));
   for (const r of rule.filter((x) => RANK[x.severity] >= FLOOR_RANK)) {
-    const match = out.find((f) => f.evidenceIds.includes(r.evidenceIds[0]!));
+    const match = out.find((f) => f.dimension === r.dimension && f.evidenceIds.includes(r.evidenceIds[0]!));
     if (match) {
       if (RANK[r.severity] > RANK[match.severity]) match.severity = r.severity;
     } else {
@@ -42,6 +42,18 @@ export function mergeFindings(rule: Finding[], model: Finding[]): Finding[] {
     }
   }
   return out;
+}
+
+// A finding that cites another dimension's scanner evidence is dropped when that dimension already reports it,
+// so one fact (e.g. dormancy) is not penalised in several dimensions.
+export function dedupeAcrossDimensions(findings: Finding[], ledger: EvidenceLedger): Finding[] {
+  return findings.filter((finding) =>
+    !finding.evidenceIds.some((id) => {
+      const e = ledger.get(id);
+      if (!e || e.id.startsWith("READ-") || e.dimension === finding.dimension) return false;
+      return findings.some((o) => o !== finding && o.dimension === e.dimension && o.evidenceIds.includes(id));
+    }),
+  );
 }
 
 export function sortFindings(findings: Finding[]): Finding[] {

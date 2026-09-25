@@ -24,6 +24,10 @@ export class EvidenceLedger {
     return this.#items.some((e) => e.id === id);
   }
 
+  get(id: string): Evidence | undefined {
+    return this.#items.find((e) => e.id === id);
+  }
+
   all(): Evidence[] {
     return [...this.#items];
   }

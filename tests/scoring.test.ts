@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { EvidenceLedger } from "../src/evidence.js";
 import {
-  groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings,
+  dedupeAcrossDimensions, groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings,
 } from "../src/scoring.js";
 import type { Finding } from "../src/types.js";
 
@@ -51,8 +51,39 @@ describe("mergeFindings", () => {
     expect(merged).toEqual([f({ title: "Richer", severity: "high" })]);
   });
 
+  it("does not let a finding from another dimension absorb a rule finding", () => {
+    const rule = f({ title: "Secrets", severity: "critical" });
+    const arch = f({ title: "Arch", dimension: "architecture", severity: "low" });
+    const merged = mergeFindings([rule], [arch]);
+    expect(merged).toEqual([arch, rule]);
+  });
+
   it("does not force medium/low rule findings in", () => {
     expect(mergeFindings([f({ severity: "medium" })], [])).toEqual([]);
+  });
+});
+
+describe("dedupeAcrossDimensions", () => {
+  const ledger = new EvidenceLedger();
+  ledger.add({ dimension: "team_process", kind: "staleness", summary: "dormant" }); // TEAM-001
+  ledger.add({ dimension: "security", kind: "deps", summary: "no dependabot" }); // SEC-001
+  ledger.add({ dimension: "code_quality", kind: "file_read", summary: "read" }, "READ"); // READ-001
+
+  it("drops an off-lane finding when the owning dimension already cites the evidence", () => {
+    const owner = f({ title: "Dormant", dimension: "team_process", evidenceIds: ["TEAM-001"] });
+    const offLane = f({ title: "Dormant again", dimension: "security", evidenceIds: ["TEAM-001", "SEC-001"] });
+    expect(dedupeAcrossDimensions([owner, offLane], ledger)).toEqual([owner]);
+  });
+
+  it("keeps an off-lane finding when the owning dimension has no finding on that evidence", () => {
+    const offLane = f({ title: "Dormant", dimension: "security", evidenceIds: ["TEAM-001"] });
+    expect(dedupeAcrossDimensions([offLane], ledger)).toEqual([offLane]);
+  });
+
+  it("leaves findings citing only READ evidence untouched", () => {
+    const a = f({ title: "A", dimension: "security", evidenceIds: ["READ-001"] });
+    const b = f({ title: "B", dimension: "code_quality", evidenceIds: ["READ-001"] });
+    expect(dedupeAcrossDimensions([a, b], ledger)).toEqual([a, b]);
   });
 });
 

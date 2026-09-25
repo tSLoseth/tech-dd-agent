@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { describeToolCall, parseArgs, slug } from "../src/cli.js";
-import { resolveTarget } from "../src/target.js";
+import { redactUrl, resolveTarget } from "../src/target.js";
 import { makeRepo } from "./helpers.js";
 
 describe("parseArgs", () => {
@@ -35,6 +35,18 @@ describe("describeToolCall", () => {
 
   it("logs other tool inputs as JSON", () => {
     expect(describeToolCall("read_file", { path: "src/a.ts" })).toBe('read_file {"path":"src/a.ts"}');
+  });
+});
+
+describe("redactUrl", () => {
+  it("strips credentials from URL targets", () => {
+    expect(redactUrl("https://user:token@github.com/x/y")).toBe("https://github.com/x/y");
+    expect(redactUrl("https://token@github.com/x/y.git")).toBe("https://github.com/x/y.git");
+  });
+
+  it("leaves URLs without credentials and ssh targets unchanged", () => {
+    expect(redactUrl("https://github.com/x/y")).toBe("https://github.com/x/y");
+    expect(redactUrl("git@github.com:x/y.git")).toBe("git@github.com:x/y.git");
   });
 });
 

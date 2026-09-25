@@ -3,7 +3,7 @@ import { runSpecialist, type AgentOptions } from "./agents/specialists.js";
 import { runSynthesis } from "./agents/synthesis.js";
 import { buildInventory, languageStats, makeReader } from "./inventory.js";
 import { collectEvidence } from "./scanners/index.js";
-import { groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings } from "./scoring.js";
+import { dedupeAcrossDimensions, groundFindings, mergeFindings, overallScore, ruleFindings, scoreDimensions, sortFindings } from "./scoring.js";
 import { DIMENSIONS, type Finding, type Report } from "./types.js";
 
 export interface PipelineOptions extends AgentOptions {
@@ -35,7 +35,7 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
     results.forEach((r) => addUsage(r.usage));
     const grounded = groundFindings(results.flatMap((r) => r.findings), ledger);
     droppedFindings = grounded.dropped;
-    findings = mergeFindings(rules, grounded.kept);
+    findings = dedupeAcrossDimensions(mergeFindings(rules, grounded.kept), ledger);
   }
 
   findings = sortFindings(findings);

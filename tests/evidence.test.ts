@@ -17,6 +17,8 @@ describe("EvidenceLedger", () => {
     expect(r.id).toBe("READ-001");
     expect(l.has("READ-001")).toBe(true);
     expect(l.has("READ-002")).toBe(false);
+    expect(l.get("READ-001")).toEqual(r);
+    expect(l.get("READ-002")).toBeUndefined();
     expect(l.forDimension("code_quality")).toHaveLength(1);
     expect(l.all()).toHaveLength(1);
   });
