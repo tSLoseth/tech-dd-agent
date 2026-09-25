@@ -1,117 +1,128 @@
 # Technology due diligence — https://github.com/tSLoseth/tiny-agent-sdk
 
-_Generated 2026-09-25T18:36:41.259Z · mode: full · model: claude-haiku-4-5-20251001 · 25 files, 1,094 lines of code_
+_Generated 2026-09-25T19:05:21.016Z · mode: full · model: claude-haiku-4-5-20251001 · 25 files, 1,094 lines of code_
 
-**Overall: 83/100 — Green**
+**Overall: 80/100 — Green**
 
-> Solid acquisition at 83/100 with exemplary architecture and security, but critical gaps in testing and team continuity must be addressed before close.
+> Solid technical foundation with strong architecture and security (score 80), but lack of automated testing and CI/CD pipeline creates operational risk that must be addressed before close.
 
 ## Red flags
 
-- Zero automated tests covering critical paths (agent loop, permission logic, tool dispatch) creates operational risk and blocks confident deployment.
-- Single contributor with no recent activity creates extreme bus factor; knowledge transfer and team onboarding must happen before acquisition closes.
-- No CI/CD pipeline means code changes are not automatically validated; syntax and type errors can reach production.
+- No automated test suite for a public SDK with complex agent loop, tool dispatch, and permission logic—high regression risk with new team members
+- Single-contributor project with no CI pipeline—prevents safe onboarding and introduces key-person dependency; confirm original author availability pre-close
+- Team process score of 64 reflects absence of testing infrastructure and deployment automation—essential for post-acquisition handoff
 
 ## Value-creation levers
 
-- Build comprehensive test suite (>70% coverage) to unlock confident scaling and reduce post-acquisition defect risk; estimated 3–4 weeks.
-- Refactor oversized CLI module into separate input handler and factory functions to improve testability and enable code reuse; estimated 1–2 weeks.
-- Add structured logging and observability (pino/winston with correlation IDs) to support cloud deployment and operational visibility; estimated 1–2 weeks.
-- Implement multi-provider LLM abstraction layer to reduce lock-in to Anthropic and increase market flexibility; estimated 2–3 weeks.
-- Add Dockerfile and basic IaC (Terraform/CloudFormation) to enable rapid cloud deployment and reduce time-to-revenue; estimated 1–2 weeks.
+- Establish test suite (70%+ coverage of core agent loop, tool execution, permissions) to unlock safe refactoring and feature velocity
+- Extract oversized CLI module and gauntlet logic into composable middleware—improves maintainability and extensibility without architectural rework
+- Add structured logging and observability hooks to enable production deployment and support multi-tenant or hosted service scenarios
+- Implement automated dependency updates (Dependabot) and environment variable schema validation to reduce supply-chain and configuration drift risk
 
 ## 100-day plan
 
-1. Days 1–14: Execute knowledge transfer with current contributor; document design decisions, deployment procedures, and API patterns. Assign one team member to pair-program and create operational runbooks.
-2. Days 15–35: Implement Jest/Vitest test suite covering agent loop (happy path, tool errors, max-steps), permission verdicts, and tool dispatch. Target >70% coverage of src/.
-3. Days 36–50: Refactor CLI module: extract input handler to src/input.ts and tool/session setup into factory functions. Add structured error logging with context (tool name, input, error type, stack trace).
-4. Days 51–65: Set up CI/CD pipeline (GitHub Actions or equivalent) to run TypeScript compilation, linting, and test suite on pull requests. Add ESLint + Prettier configuration.
-5. Days 66–85: Integrate structured logging library (pino or winston) with JSON output and correlation IDs. Add Dockerfile with multi-stage build and document deployment model.
-6. Days 86–100: Create CONTRIBUTING.md with development setup, code style, commit format, PR checklist, and tool-addition guide. Set up Dependabot for automated security patch updates.
+1. Days 1–14: Set up CI pipeline (GitHub Actions) with TypeScript compilation check and integrate test runner; confirm original author engagement and knowledge transfer plan
+2. Days 15–35: Build test suite for agent loop (src/agent.ts) and CLI (src/cli.ts) using Vitest; target 60%+ coverage of critical paths; integrate into CI
+3. Days 36–50: Extract readline input handler and confirmation prompt from CLI into separate modules; add ESLint and Prettier to build pipeline
+4. Days 51–70: Add structured logging (pino or winston) at agent loop, tool invocation, and permission check points; document deployment model and environment variables
+5. Days 71–85: Refactor tool execution gauntlet into middleware chain pattern to decouple permissions and hooks; add state versioning and migration logic
+6. Days 86–100: Configure Dependabot for automated security updates; document public API exports and module boundaries; conduct knowledge transfer review with incoming team
 
 ## Scorecard
 
 | Dimension | Score | Status | Findings |
 |---|---:|:---:|---:|
-| Architecture & stack | 98 | Green | 3 |
-| Code quality & tech debt | 71 | Amber | 5 |
-| Security | 94 | Green | 3 |
+| Architecture & stack | 88 | Green | 6 |
+| Code quality & tech debt | 75 | Amber | 5 |
+| Security | 94 | Green | 4 |
 | Cloud readiness | 80 | Green | 4 |
-| Team & process | 73 | Amber | 4 |
+| Team & process | 64 | Amber | 4 |
 
 ## Findings
 
 ### Architecture & stack
 
-- **[LOW] Tight coupling to Anthropic API with no provider abstraction** (effort M) — The codebase is tightly coupled to the Anthropic Messages API. The agent loop (agent.ts) directly uses Anthropic types and methods (client.messages.stream, stop_reason, tool_use blocks). The README explicitly states this is intentional ("targets the Anthropic API only, on purpose"), which is appropriate for a learning project. However, this design choice limits portability and makes it difficult to swap in alternative LLM providers (OpenAI, Cohere, etc.) without significant refactoring. For a production SDK, this might be a limitation.
-  - Recommendation: This is a deliberate design choice and appropriate for the project's scope. If the SDK is to support multiple providers in the future, consider defining an internal LLM interface (e.g., LLMClient) that abstracts away provider-specific details. This would be a medium-effort refactor (M) but would significantly increase flexibility.
-  - Evidence: `READ-010`, `READ-006`
-- **[INFO] Exemplary modular architecture with clear separation of concerns** (effort S) — The codebase demonstrates excellent architectural design for a learning SDK. The core loop (agent.ts) is cleanly separated from tools (tools.ts), permissions (permissions.ts), hooks (hooks.ts), and session state (session.ts). Each module has a single, well-defined responsibility. The streaming generator pattern (runAgentStream) with a non-streaming wrapper (runAgent) avoids code duplication and provides two clean front doors. Tool abstraction uses Zod for both schema definition and runtime validation, bridging TypeScript types to JSON Schema automatically. The permission policy is declarative (allow/deny/ask), while hooks provide imperative extension points—a clean separation that mirrors production systems like Claude Code.
-  - Recommendation: This architecture is a strength. Maintain this separation as the codebase grows. The staged examples (hello.ts through stage5.ts) effectively demonstrate each concept incrementally, which is valuable for onboarding.
-  - Evidence: `READ-010`, `READ-011`, `READ-012`, `READ-020`, `READ-021`
-- **[INFO] Minimal, focused dependency footprint with appropriate choices** (effort S) — The project declares only 3 runtime dependencies: @anthropic-ai/sdk (the core API client), zod (schema validation), and zod-to-json-schema (schema serialization). This is lean and intentional. Zod is the right choice for runtime validation and schema generation—it avoids the need for separate schema definition and validation libraries. The dev dependencies (TypeScript, tsx, @types/node) are minimal and standard. No framework bloat, no unnecessary abstractions. The package.json explicitly marks this as a learning project (private: true, not published to npm), which is appropriate.
-  - Recommendation: Keep dependencies minimal. If the project evolves beyond a learning tool, consider whether additional dependencies (e.g., for logging, observability, or persistence) are truly needed or if they can be injected by consumers.
-  - Evidence: `READ-005`, `ARC-002`
+- **[MEDIUM] Tight coupling between tool execution and permission/hook layers** (effort M) — The executeToolCall function in agent.ts orchestrates the full gauntlet: pre-hooks → permission policy → tool dispatch → post-hooks. While this ensures consistent enforcement, it creates a single point where all three concerns (permissions, hooks, tool execution) are tightly woven together. If a new cross-cutting concern (e.g., rate limiting, retry logic, or audit enrichment) needs to be added, it must be threaded through this function. The function signature already has 7 parameters, and adding more concerns will increase complexity.
+  - Recommendation: Consider extracting the gauntlet logic into a composable middleware or interceptor chain. This would allow new concerns to be added without modifying executeToolCall. For example, a ToolExecutor interface with a chain-of-responsibility pattern would decouple concerns and improve extensibility.
+  - Evidence: `READ-007`
+- **[LOW] No abstraction over the Anthropic API; direct dependency on Messages API** (effort L) — The agent loop directly uses the Anthropic Messages API (client.messages.stream, stop_reason, tool_use blocks). There is no provider abstraction layer. This is intentional per the README ("targets the Anthropic API only, on purpose"), and appropriate for a learning project. However, it means the SDK cannot be extended to support other LLM providers (OpenAI, Gemini, etc.) without significant refactoring. The tight coupling to Anthropic's message format and tool schema is baked into agent.ts, tools.ts, and session.ts.
+  - Recommendation: This is acceptable for the current scope. If multi-provider support becomes a future goal, introduce a Provider interface that abstracts message streaming, tool schema conversion, and response parsing. This is a non-trivial refactor (L effort) and should be deferred unless there is a clear business need.
+  - Evidence: `READ-007`, `READ-008`, `READ-002`
+- **[LOW] State persistence is naive; no versioning or migration strategy** (effort S) — Session state is persisted as raw JSON (messages array) via writeFileSync/readFileSync. There is no versioning, schema validation on load, or migration path. If the message format changes (e.g., new fields added to ToolCall or RunAgentResult), old saved sessions will silently fail to deserialize or will load with missing fields. The load() method does not validate the loaded data against the current schema.
+  - Recommendation: Add a version field to the saved state and implement a migration function. Validate loaded state with zod before accepting it. This is low priority for a learning project but becomes important if sessions are used in production or shared across versions.
+  - Evidence: `READ-009`
+- **[LOW] Subagent isolation is context-based but not capability-based** (effort S) — Subagents are isolated by context (fresh Session with empty messages) and by tool set (the config.tools parameter). However, there is no enforcement that prevents a subagent from being spawned with the same tools as the parent, including spawn_subagent itself. The README notes this as a non-goal ("no runaway recursion"), but the code does not prevent it. A malicious or buggy prompt could cause infinite recursion. The isolation is by convention, not by design.
+  - Recommendation: Add a runtime check in createSubagentTool to reject spawn_subagent from the worker's tool set. Alternatively, document this as a caller responsibility and require explicit tool filtering. This is low priority for a learning project but should be addressed before production use.
+  - Evidence: `READ-018`, `READ-002`
+- **[INFO] Clean, modular architecture with clear separation of concerns** (effort S) — The SDK is well-structured into focused modules: agent.ts (the core loop), tools.ts (tool abstraction and dispatch), session.ts (multi-turn state), permissions.ts (policy layer), hooks.ts (interception points), and subagent.ts (delegation). Each module has a single responsibility and is independently testable. The design explicitly avoids framework lock-in and uses composition over inheritance. The streaming generator pattern (runAgentStream) elegantly provides both blocking and streaming interfaces from a single implementation, avoiding code duplication.
+  - Recommendation: This is a strength. Maintain this modular structure as the codebase grows. Document the module boundaries and dependency graph to help future maintainers.
+  - Evidence: `READ-007`, `READ-008`, `READ-009`, `READ-016`, `READ-017`, `READ-018`, `READ-002`
+- **[INFO] Minimal, well-chosen dependency footprint** (effort S) — The SDK has only 3 runtime dependencies: @anthropic-ai/sdk (the API client), zod (schema validation), and zod-to-json-schema (schema serialization). This is appropriate for a learning project and a library. The dependencies are stable, widely-used packages. No heavy frameworks or unnecessary transitive bloat. The dev stack (TypeScript, tsx, @types/node) is standard and minimal.
+  - Recommendation: This is a strength. Keep the dependency count low. If adding features, prefer composition with existing tools over new dependencies.
+  - Evidence: `READ-001`, `ARC-002`
 
 ### Code quality & tech debt
 
-- **[HIGH] No automated tests; critical paths untested** (effort M) — The codebase contains 15 source files (1,094 lines of TypeScript) with zero test files. The core agent loop (src/agent.ts, 180 lines) — which orchestrates model calls, tool execution, permission checks, and hook invocation — has no unit or integration tests. The permission policy (src/permissions.ts, 61 lines) and tool dispatch logic (src/tools.ts, 156 lines) are also untested. This is a learning project, but the absence of tests means regressions in the agent loop, tool execution, or permission enforcement cannot be caught automatically. For a buyer, this creates maintenance risk and slows future feature work.
-  - Recommendation: Add a test suite covering the agent loop (happy path, tool errors, max-steps limit), permission policy verdicts (allow/deny/ask), and tool dispatch. Start with the core loop and permission logic; aim for >70% coverage of src/. Use Jest or Vitest; estimate 3–4 person-weeks to reach baseline coverage.
-  - Evidence: `QUA-001`, `READ-013`, `READ-014`, `READ-018`
-- **[MEDIUM] Oversized CLI module with mixed concerns** (effort M) — src/cli.ts is 153 lines and combines input handling (readline, paste coalescing), session management, tool setup, permission policy configuration, and hook registration. The paste-aware input buffering logic (lines 30–60) is tightly coupled to the REPL loop. This makes the module hard to test in isolation and difficult to reuse the CLI logic in other contexts (e.g., a web server or batch runner).
-  - Recommendation: Extract the input handler (readline + paste coalescing) into a separate module (e.g., src/input.ts). Extract session and tool setup into a factory function. This will make the CLI testable and allow the input handler to be reused. Effort: 1–2 person-weeks.
+- **[HIGH] No automated tests in a learning SDK with public API surface** (effort M) — The repository contains 15 source files (1,094 lines of TypeScript) across core modules (agent.ts, tools.ts, session.ts, permissions.ts, hooks.ts, subagent.ts) and examples, but zero test files. The SDK exports a public API (RunAgentOptions, RunAgentResult, AgentEvent, Session, Tool types) and implements complex logic including streaming, permission policies, hooks, and subagent delegation. Without tests, regressions in the agent loop, tool dispatch, permission enforcement, or state management cannot be caught automatically. The README explicitly states this is a learning project, but the absence of tests makes it difficult to verify correctness of the core loop or refactor safely.
+  - Recommendation: Add a test suite covering the agent loop (runAgentStream, runAgent), tool dispatch and validation, permission policy verdicts, hook execution order, and session state persistence. Start with unit tests for the core loop (mocking the Anthropic client) and integration tests for the CLI. Target 70%+ coverage of src/ files. Use a lightweight framework (e.g., Node's built-in test runner or Vitest) to keep dependencies minimal.
+  - Evidence: `QUA-001`, `READ-013`, `READ-014`, `READ-006`
+- **[MEDIUM] Oversized CLI module with mixed concerns** (effort S) — The src/cli.ts file is 153 lines and combines multiple responsibilities: readline input handling (paste-aware buffering with timers), permission confirmation logic, subagent tool creation, session setup, and the main REPL loop. The paste-aware input logic (lines 30–60 in READ-014) is a custom state machine with timers and backlog management that could be extracted. This makes the module harder to test in isolation and increases cognitive load for maintainers.
+  - Recommendation: Extract the readline input handler (nextInput, deliver, backlog, timer logic) into a separate module (e.g., src/input.ts). Extract the confirmation prompt into a separate function or module. This will make the CLI loop clearer and allow the input handler to be tested independently.
   - Evidence: `READ-014`
-- **[MEDIUM] Minimal error handling in tool execution** (effort M) — The tool dispatch logic (src/tools.ts, lines 140–156) catches errors from file operations and shell commands and returns them as error results to the model. However, there is no logging of errors, no retry logic, and no distinction between transient and permanent failures. If a tool fails, the model sees only the error text; operators have no visibility into what went wrong or why. For a production agent, this makes debugging and monitoring difficult.
-  - Recommendation: Add structured error logging (e.g., with context: tool name, input, error type, stack trace). Consider adding retry logic for transient failures (e.g., ENOENT on a race condition). Effort: 1–2 person-weeks.
-  - Evidence: `READ-013`
-- **[LOW] No linter or code formatter configured** (effort S) — The repository has no ESLint, Prettier, or similar configuration. TypeScript strict mode is enabled (tsconfig.json), which catches type errors, but there is no automated enforcement of style, import ordering, or common pitfalls (unused variables, missing error handling). Code review must rely on manual inspection.
-  - Recommendation: Add ESLint with a standard config (e.g., eslint-config-prettier) and Prettier. Add a pre-commit hook or CI step to enforce formatting. Effort: <1 person-week.
-  - Evidence: `QUA-002`, `READ-019`
-- **[INFO] Clean, modular architecture with clear separation of concerns** (effort S) — The codebase is well-organized into focused modules: the agent loop (src/agent.ts), tools (src/tools.ts), permissions (src/permissions.ts), hooks (src/hooks.ts), and session state (src/session.ts). Each module has a single responsibility and is documented with clear comments explaining its role. The streaming generator pattern (runAgentStream) is elegant and avoids code duplication. The README is thorough and includes runnable examples (examples/stage1.ts through stage5.ts) that demonstrate each concept incrementally. This is a learning project, but the code is readable and maintainable.
-  - Recommendation: Maintain this modular structure as the codebase grows. Use the examples as a foundation for integration tests.
-  - Evidence: `READ-004`, `READ-013`, `READ-014`
+- **[LOW] No linter or code formatter configured** (effort S) — The repository has no ESLint, Prettier, Biome, or other linting/formatting configuration. While TypeScript strict mode is enabled in tsconfig.json (READ-021), there is no automated enforcement of code style, import ordering, or common pitfalls (unused variables, implicit any, etc.). This increases the cost of code review and makes onboarding contributors harder.
+  - Recommendation: Add ESLint with a standard config (e.g., @typescript-eslint/recommended) and Prettier for formatting. Include both in the build pipeline and pre-commit hooks. This is a low-effort hygiene improvement that will reduce friction in future maintenance.
+  - Evidence: `QUA-002`, `READ-021`
+- **[LOW] TypeScript strict mode enabled but no type exports documented** (effort S) — The tsconfig.json enables strict mode (READ-021), which is good practice. However, the package.json marks the project as private and does not publish type definitions or a public API surface. The README notes this is a learning project not published to npm. Without a clear public API contract or type exports, future consumers (or a future npm release) may face friction integrating the SDK.
+  - Recommendation: If the project is intended to remain private/educational, no action is needed. If it is later published, add an index.ts that explicitly exports the public API (RunAgentOptions, RunAgentResult, Session, Tool, etc.), enable declaration: true in tsconfig.json, and document the API in a separate file (e.g., API.md).
+  - Evidence: `READ-021`, `READ-005`, `READ-006`
+- **[INFO] Clear module boundaries and single-responsibility design** (effort S) — The source code is well-organized into focused modules: agent.ts (the loop), tools.ts (tool dispatch and validation), session.ts (multi-turn state), permissions.ts (policy verdicts), hooks.ts (pre/post-tool interception), and subagent.ts (delegation). Each module has a clear purpose documented in comments. The agent loop itself (runAgentStream) is implemented once and reused by both streaming and blocking callers (runAgent), avoiding duplication. This design makes the codebase easy to follow and modify.
+  - Recommendation: Preserve this structure as the codebase grows. Document the module contracts (inputs, outputs, side effects) in JSDoc comments to aid future maintainers.
+  - Evidence: `READ-013`, `READ-006`
 
 ### Security
 
-- **[MEDIUM] No automated dependency updates** (effort S) — The repository has no Dependabot or Renovate configuration. With 3 runtime dependencies (@anthropic-ai/sdk, zod, zod-to-json-schema) and 3 dev dependencies, the codebase relies on manual updates to patch security vulnerabilities in transitive dependencies. Given the asset's educational purpose and small scope, this is manageable but represents a supply-chain risk if the code were to be deployed or published.
-  - Recommendation: Add a Dependabot or Renovate configuration to automate dependency updates. For a learning project, weekly or monthly checks are sufficient. Prioritize security patches.
-  - Evidence: `SEC-001`
-- **[INFO] Secrets handling is well-designed but relies on manual discipline** (effort S) — The codebase demonstrates strong secrets handling practices: ANTHROPIC_API_KEY is read from environment variables via a custom .env loader (src/env.ts), never hardcoded. The .gitignore correctly excludes .env files while preserving .env.example as a template. The custom loader is intentional—it tolerates quoted values and walks up the directory tree, avoiding an extra dependency. No API keys or credentials are visible in the repository.
-  - Recommendation: Continue this practice. Document in the README that .env must never be committed (already done). Consider adding a pre-commit hook to catch accidental .env commits, though .gitignore is the primary safeguard.
-  - Evidence: `READ-007`, `READ-008`, `READ-009`, `READ-017`, `READ-016`
-- **[INFO] Path traversal and command injection are defended in depth** (effort S) — The tools layer implements two independent guards against path escape and command injection: (1) the permission policy (src/permissions.ts) validates intent before any tool runs, denying file operations outside the workspace root; (2) the tool handlers themselves use resolveInside() to enforce the same boundary at execution time. Command execution uses child_process.exec with a 15-second timeout and explicit cwd scoping. The design follows the principle of defense in depth—a single guard failure does not compromise safety.
-  - Recommendation: This design is sound for an educational SDK. If deployed as a service, add audit logging of all tool calls (the PostToolUse hook in src/hooks.ts is already designed for this) and consider rate-limiting command execution.
-  - Evidence: `READ-023`, `READ-024`
+- **[MEDIUM] No automated dependency updates; manual review required for supply-chain risk** (effort S) — The repository has no Dependabot or Renovate configuration. The package.json declares 3 runtime dependencies (@anthropic-ai/sdk, zod, zod-to-json-schema) and 3 dev dependencies, all pinned to caret ranges (^). With only 3 commits and no CI pipeline, there is no automated mechanism to detect or apply security patches. A vulnerability in any transitive dependency would require manual discovery and remediation.
+  - Recommendation: Add Dependabot or Renovate configuration to automate dependency updates and security alerts. Given the learning-project status and small dependency footprint, this is a low-effort addition (S) that would significantly reduce supply-chain risk.
+  - Evidence: `SEC-001`, `READ-003`, `TEAM-001`
+- **[INFO] Secrets handling follows 12-factor principles with proper environment isolation** (effort S) — The SDK correctly reads the Anthropic API key from environment variables only, never embedding it in code. The custom .env loader (src/env.ts) is minimal and tolerant of quoting variations. The .gitignore properly excludes .env files while preserving .env.example as a template. The example code (examples/hello.ts) demonstrates the pattern: loadEnv() pulls the key into process.env before the SDK client is instantiated, ensuring the credential never appears in source.
+  - Recommendation: Continue this practice. No action required.
+  - Evidence: `READ-010`, `READ-011`, `READ-012`, `READ-020`
+- **[INFO] Path traversal and command injection mitigated by defense-in-depth design** (effort S) — The tools layer implements two independent guards against path escape and command injection. File tools (read_file, list_dir, write_file) call resolveInside() to reject paths that climb outside the workspace root before the permission policy is even consulted. The run_command tool accepts arbitrary shell commands but the permission policy (workspacePolicy) gates execution: allowlisted commands (e.g., 'ls', 'pwd') auto-allow; all others defer to human confirmation. Errors are fed back to the model as strings rather than thrown, allowing self-correction. This layered approach (tool-level validation + policy-level gating + human confirmation) is sound.
+  - Recommendation: This design is appropriate for the asset's scope (a learning SDK with sandboxed file and command tools). No changes needed.
+  - Evidence: `READ-025`, `READ-026`
+- **[INFO] Minimal dependency footprint reduces supply-chain surface area** (effort S) — The SDK declares only 3 runtime dependencies (Anthropic SDK, Zod, and zod-to-json-schema) and 3 dev dependencies. This is unusually lean for a TypeScript project and significantly reduces the attack surface from transitive dependencies. The hand-rolled .env loader avoids adding dotenv as a dependency, keeping the footprint intentional and auditable.
+  - Recommendation: Maintain this discipline. Before adding any new dependency, evaluate whether it can be hand-rolled or replaced with a lighter alternative.
+  - Evidence: `READ-003`, `READ-010`
 
 ### Cloud readiness
 
-- **[MEDIUM] No containerisation or deployment packaging** (effort S) — The asset has no Dockerfile, Docker Compose, or container configuration. It is a CLI tool and SDK library distributed as source code requiring local Node.js 20+ and npm install. For cloud deployment or CI/CD integration, containerisation would be needed. The README explicitly states this is a learning project not intended for production use, which contextualises the gap.
-  - Recommendation: If the asset is to be deployed as a service or integrated into cloud pipelines, add a Dockerfile with a Node.js base image, multi-stage build for TypeScript compilation, and a minimal runtime layer. For now, document the deployment model (source-only, requires Node 20+).
-  - Evidence: `CLD-001`, `READ-026`
-- **[MEDIUM] No infrastructure-as-code or deployment configuration** (effort M) — No Terraform, CloudFormation, Helm charts, or other IaC files are present. The asset is a standalone SDK with no deployment manifests, environment-specific configs, or orchestration definitions. This limits repeatability and cloud-native deployment patterns.
-  - Recommendation: Define deployment targets (e.g., Lambda, ECS, or Kubernetes) and create corresponding IaC templates. Start with a simple Terraform module or CloudFormation template for the most likely deployment scenario. For a library-only use case, this may be deferred to consumers.
-  - Evidence: `CLD-002`, `READ-026`
-- **[MEDIUM] No observability or logging infrastructure** (effort M) — The codebase has no structured logging, tracing, or metrics collection. The CLI and agent loop (src/agent.ts, src/cli.ts) use console output for user interaction but no machine-readable logs, no correlation IDs, and no integration with observability platforms. This makes debugging and monitoring in cloud environments difficult.
-  - Recommendation: Integrate a structured logging library (e.g., pino or winston) with JSON output. Add correlation IDs to trace requests through the agent loop. For cloud deployment, ensure logs are written to stdout/stderr for container log aggregation. Consider adding basic metrics (tool execution time, API call counts) if the asset becomes a service.
-  - Evidence: `ARC-001`
-- **[LOW] 12-factor environment configuration partially implemented** (effort S) — The SDK reads ANTHROPIC_API_KEY from environment variables via a custom .env loader (src/env.ts), which is 12-factor compliant. However, the implementation is hand-rolled rather than using a standard package (dotenv), and the loader only handles a single key. The .env.example file documents the pattern. This is adequate for a learning project but not production-grade.
-  - Recommendation: For production use, adopt a standard .env library (dotenv) or rely on Node's native --env-file flag (Node 20.10+). Extend configuration to cover other runtime parameters (API endpoints, timeouts, log levels) as the asset grows.
-  - Evidence: `CLD-003`, `READ-030`, `READ-031`
+- **[MEDIUM] No containerisation or deployment packaging** (effort S) — The asset has no Dockerfile, Docker Compose, or container configuration. It is a TypeScript SDK distributed as source code with npm scripts (build, dev, hello, cli) but no container image or deployment manifest. For a learning project explicitly marked as non-production (README states "not a production runtime"), this is appropriate; however, if the asset is to be deployed as a service or integrated into a cloud platform, containerisation would be required.
+  - Recommendation: If the asset remains a library or CLI tool distributed via npm, containerisation is not required. If it is to be deployed as a hosted service, add a Dockerfile with a Node 20+ base image, multi-stage build for TypeScript compilation, and a minimal runtime layer. Effort is low (S) for a basic setup.
+  - Evidence: `CLD-001`, `READ-028`, `READ-029`
+- **[MEDIUM] No infrastructure-as-code or deployment configuration** (effort M) — The repository contains no Terraform, CloudFormation, Kubernetes manifests, or other infrastructure-as-code. There is no CI/CD pipeline, no deployment target definition, and no environment-specific configuration beyond a single .env.example file. The asset is designed as a standalone learning project with manual execution via npm scripts.
+  - Recommendation: Define deployment targets and infrastructure as code. For a cloud-native deployment, create Kubernetes manifests or Terraform modules. For simpler hosting (e.g., AWS Lambda, Cloud Run), add serverless configuration. At minimum, document the deployment model and required environment variables in a deployment guide.
+  - Evidence: `CLD-002`, `TEAM-001`, `READ-028`
+- **[MEDIUM] No observability or logging infrastructure** (effort M) — The codebase has no structured logging, metrics collection, or tracing. The agent loop (src/agent.ts) and tool execution (src/tools.ts) emit no logs or events suitable for cloud observability platforms. The PostToolUse hook (src/hooks.ts) is described as a lightweight audit stand-in but does not integrate with standard logging or APM tools.
+  - Recommendation: Add structured logging using a library like `pino` or `winston`. Emit logs at key points: agent loop entry/exit, tool invocation, permission checks, and errors. If the asset is deployed as a service, integrate with a cloud logging platform (e.g., CloudWatch, Stackdriver) and add basic metrics (request count, latency, errors). For a library, provide hooks or a logging interface that consumers can wire to their own observability stack.
+  - Evidence: `READ-029`, `ARC-001`
+- **[LOW] Partial 12-factor compliance: environment variables used, but limited scope** (effort S) — The asset reads ANTHROPIC_API_KEY from environment variables via a custom .env loader (src/env.ts), following 12-factor principles. However, only one configuration value is externalized. The custom loader walks up the directory tree to find .env, which is non-standard and may cause unexpected behavior in containerised or cloud environments where the working directory is fixed.
+  - Recommendation: Standardise environment variable loading: use Node's built-in `--env-file` flag (Node 20.10+) or the `dotenv` package. Document all required environment variables in a schema (e.g., using zod, which is already a dependency). Remove the directory-walking logic to ensure predictable behavior in containerised deployments.
+  - Evidence: `CLD-003`, `READ-033`, `READ-034`
 
 ### Team & process
 
-- **[HIGH] Critical bus factor: single contributor with zero recent activity** (effort M) — The repository has a bus factor of 1, with 100% of commits authored by a single contributor. The project has been dormant for 116 days (since June 2026), with only 3 commits total and no activity in the last 90 days. This creates significant key-person risk: if the sole contributor becomes unavailable, there is no one else familiar with the codebase to maintain, debug, or extend it.
-  - Recommendation: Before acquisition, establish a knowledge transfer plan with the current contributor. Document critical design decisions, deployment procedures, and API integration patterns. Assign at least one team member to pair-program on the codebase and create runbooks for common operational tasks.
+- **[HIGH] Single-contributor project with no CI pipeline** (effort S) — The repository has only 3 commits by 1 contributor, with the last commit 116 days ago and no activity in the last 90 days. More critically, there is no CI/CD configuration (no GitHub Actions, GitLab CI, CircleCI, or equivalent). The project is explicitly marked as a learning/demo asset in the README ("Learning project. ~9 source files, zero framework. Not published to npm."), but the absence of automated build and test gates creates delivery risk if this code is to be maintained or extended post-acquisition.
+  - Recommendation: Establish a CI pipeline (GitHub Actions or equivalent) that runs `npm run build` and any test suite on every commit. This is essential for onboarding new team members and preventing regressions. Given the project's educational nature, a minimal pipeline (TypeScript compilation check) is sufficient as a starting point.
+  - Evidence: `TEAM-001`, `TEAM-003`, `TEAM-004`, `READ-030`
+- **[HIGH] No automated tests or test infrastructure** (effort M) — The scanner reports 15 source files and 0 test files (QUA-001). Combined with the absence of CI, there is no automated verification that the code works as intended. For a learning project this may be acceptable, but if the asset is to be maintained or extended, the lack of test coverage creates risk of silent regressions and makes refactoring unsafe.
+  - Recommendation: Establish a test suite using a framework like Jest or Vitest. Start with integration tests for the core agent loop (src/agent.ts) and the CLI (src/cli.ts). Integrate test execution into the CI pipeline. Target at least 60% coverage of critical paths (agent loop, tool execution, permissions).
+  - Evidence: `QUA-001`, `TEAM-001`
+- **[MEDIUM] Project dormancy and key-person dependency** (effort S) — The repository has been inactive for 116 days (last commit in June 2026, assessed in October 2026). All 3 commits are authored by a single contributor (bus factor = 1). While the commit history is too short to formally assess key-person risk, the combination of zero activity, single authorship, and explicit learning-project status means there is no active development team and no redundancy. If the original author is unavailable, there is no one else familiar with the codebase.
+  - Recommendation: Before acquisition close, identify the original author and confirm their availability and willingness to support the asset post-close. Plan for knowledge transfer (pair programming, code review, documentation) with incoming team members. Consider whether this asset will be actively maintained or archived.
   - Evidence: `TEAM-003`, `TEAM-004`
-- **[MEDIUM] No CI/CD pipeline configured** (effort S) — The project has no continuous integration configuration (GitHub Actions, GitLab CI, or equivalent). There is no automated build, test, or deployment process. This means code changes are not validated before merge, and there is no automated gate to catch regressions or breaking changes.
-  - Recommendation: Implement a basic CI pipeline that runs `npm run build` and any test suite on pull requests. Given the project's learning-focused nature and lack of tests (QUA-001), start with TypeScript compilation and linting as the gate. This will catch syntax errors and type mismatches early.
-  - Evidence: `TEAM-001`
-- **[MEDIUM] Minimal documentation of development process and onboarding** (effort S) — While the README (READ-027) is well-written and explains the SDK's concepts clearly, there is no CONTRIBUTING.md, DEVELOPMENT.md, or similar guide for new team members. The project lacks documented conventions for code style, commit messages, PR review process, or local development setup beyond the basic quickstart. This slows onboarding and increases the risk of inconsistent contributions.
-  - Recommendation: Create a CONTRIBUTING.md file documenting: (1) local development setup and how to run examples; (2) code style expectations (TypeScript conventions, naming); (3) commit message format; (4) PR review checklist; (5) how to add new tools or hooks. Link it from the README.
-  - Evidence: `TEAM-002`, `READ-027`
-- **[INFO] Clear, modular architecture aids knowledge transfer** (effort S) — The codebase is well-structured with small, focused modules (agent.ts, tools.ts, session.ts, permissions.ts, hooks.ts, subagent.ts) and a clear progression of examples (hello.ts through stage5.ts) that demonstrate each concept incrementally. The README explicitly maps concepts to files and explains the design philosophy. This modularity and documentation reduce the cognitive load for new team members and make the codebase easier to understand despite the single-contributor history.
-  - Recommendation: Preserve this modular structure during any refactoring. Use the staged examples as a template for integration tests once a test framework is added.
-  - Evidence: `READ-027`, `ARC-001`
+- **[INFO] Adequate documentation for a learning project** (effort S) — The README (104 lines) is well-structured and clearly explains the project's purpose, design, and non-goals. It includes a quickstart guide, stage-by-stage examples, and design rationale. The codebase is small (1,094 lines of TypeScript across 15 source files) and each concept is documented as living in a specific file (e.g., agent loop in src/agent.ts, tools in src/tools.ts). This clarity is a strength for onboarding and understanding the asset's scope.
+  - Recommendation: Preserve and maintain this documentation standard. As the team grows, ensure new contributors update the README and inline comments when adding features.
+  - Evidence: `TEAM-002`, `READ-030`, `ARC-001`
 
 ## Evidence
 
@@ -125,7 +136,7 @@ _Generated 2026-09-25T18:36:41.259Z · mode: full · model: claude-haiku-4-5-202
 - `CLD-001` No Dockerfile or compose file found
 - `CLD-002` No infrastructure-as-code or deployment configuration found
 - `CLD-003` Configuration read from environment variables in 1 files (12-factor) — examples/hello.ts
-- `TEAM-003` 3 commits by 1 contributors since 2026-06; 0 in the last 90 days; last commit 116 days ago
+- `TEAM-003` 3 commits by 1 contributors since 2026-06; 0 in the last 90 days; last commit 116 days ago; history too short to assess key-person risk (3 commits)
 - `TEAM-004` Bus factor 1: top contributor authored 100% of commits
 - `READ-001` Inspected package.json — package.json
 - `READ-002` Inspected README.md — README.md
@@ -133,33 +144,36 @@ _Generated 2026-09-25T18:36:41.259Z · mode: full · model: claude-haiku-4-5-202
 - `READ-004` Inspected README.md — README.md
 - `READ-005` Inspected package.json — package.json
 - `READ-006` Inspected README.md — README.md
-- `READ-007` Inspected src/env.ts — src/env.ts
-- `READ-008` Inspected examples/hello.ts — examples/hello.ts
-- `READ-009` Inspected .env.example — .env.example
-- `READ-010` Inspected src/agent.ts — src/agent.ts
-- `READ-011` Inspected src/tools.ts — src/tools.ts
-- `READ-012` Inspected src/session.ts — src/session.ts
+- `READ-007` Inspected src/agent.ts — src/agent.ts
+- `READ-008` Inspected src/tools.ts — src/tools.ts
+- `READ-009` Inspected src/session.ts — src/session.ts
+- `READ-010` Inspected src/env.ts — src/env.ts
+- `READ-011` Inspected examples/hello.ts — examples/hello.ts
+- `READ-012` Inspected .env.example — .env.example
 - `READ-013` Inspected src/agent.ts — src/agent.ts
 - `READ-014` Inspected src/cli.ts — src/cli.ts
-- `READ-015` Code search (29-char pattern): 9 matches — src/env.ts, src/hooks.ts, src/permissions.ts, src/subagent.ts, src/tools.ts
-- `READ-016` Code search (51-char pattern): 18 matches — .env.example, AGENTS.md, examples/hello.ts, README.md, src/agent.ts
-- `READ-017` Inspected .gitignore — .gitignore
-- `READ-018` Code search (27-char pattern): 3 matches — src/cli.ts, src/hooks.ts, src/permissions.ts
-- `READ-019` Inspected tsconfig.json — tsconfig.json
-- `READ-020` Inspected src/permissions.ts — src/permissions.ts
-- `READ-021` Inspected src/hooks.ts — src/hooks.ts
-- `READ-022` Code search (15-char pattern): 50 matches — examples/hello.ts, examples/stage1.ts, examples/stage2.ts, examples/stage3.ts, examples/stage4.ts
-- `READ-023` Inspected src/permissions.ts — src/permissions.ts
-- `READ-024` Inspected src/tools.ts — src/tools.ts
-- `READ-025` Inspected package.json — package.json
-- `READ-026` Inspected README.md — README.md
-- `READ-027` Inspected README.md — README.md
+- `READ-015` Code search (32-char pattern): 11 matches — src/cli.ts, src/env.ts, src/hooks.ts, src/permissions.ts, src/subagent.ts
+- `READ-016` Inspected src/permissions.ts — src/permissions.ts
+- `READ-017` Inspected src/hooks.ts — src/hooks.ts
+- `READ-018` Inspected src/subagent.ts — src/subagent.ts
+- `READ-019` Code search (51-char pattern): 18 matches — .env.example, AGENTS.md, examples/hello.ts, README.md, src/agent.ts
+- `READ-020` Inspected .gitignore — .gitignore
+- `READ-021` Inspected tsconfig.json — tsconfig.json
+- `READ-022` Code search (40-char pattern): 0 matches
+- `READ-023` Inspected src/cli.ts — src/cli.ts
+- `READ-024` Code search (38-char pattern): 50 matches — examples/hello.ts, examples/stage1.ts, examples/stage2.ts, examples/stage3.ts, examples/stage4.ts
+- `READ-025` Inspected src/permissions.ts — src/permissions.ts
+- `READ-026` Inspected src/tools.ts — src/tools.ts
+- `READ-027` Code search (26-char pattern): 0 matches
 - `READ-028` Inspected package.json — package.json
-- `READ-029` Code search (52-char pattern): 30 matches — examples/hello.ts, examples/stage1.ts, examples/stage2.ts, examples/stage3.ts
-- `READ-030` Inspected src/env.ts — src/env.ts
-- `READ-031` Inspected .env.example — .env.example
-- `READ-032` Inspected tsconfig.json — tsconfig.json
+- `READ-029` Inspected README.md — README.md
+- `READ-030` Inspected README.md — README.md
+- `READ-031` Inspected package.json — package.json
+- `READ-032` Inspected .env.example — .env.example
+- `READ-033` Inspected src/env.ts — src/env.ts
+- `READ-034` Inspected examples/hello.ts — examples/hello.ts
+- `READ-035` Code search (60-char pattern): 0 matches
 
 ## Method
 
-Scores are computed deterministically from the findings (critical −35, high −15, medium −6, low −2; any critical finding makes the dimension red). Every finding cites evidence from the scanners or from files the agents actually opened; 0 model findings were discarded for citing evidence that does not exist. Critical and high scanner flags cannot be removed by the model. Cost: $0.1687 (130,898 tokens).
+Scores are computed deterministically from the findings (critical −35, high −15, medium −6, low −2; any critical finding makes the dimension red). Every finding cites evidence from the scanners or from files the agents actually opened. 0 model findings were discarded for citing evidence that does not exist, and 5 findings were removed as cross-dimension duplicates. Critical and high scanner flags cannot be removed by the model. Cost: $0.2001 (160,382 tokens).
