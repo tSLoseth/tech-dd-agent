@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { describeToolCall, parseArgs, slug } from "../src/cli.js";
+import { describeToolCall, parseArgs, slug, summaryLine } from "../src/cli.js";
 import { redactUrl, resolveTarget } from "../src/target.js";
 import { makeRepo } from "./helpers.js";
 
@@ -27,6 +27,24 @@ describe("parseArgs", () => {
     const argv = ["./repo", "--concurrency"];
     if (n !== undefined) argv.push(n);
     expect(() => parseArgs(argv)).toThrow(/Usage/);
+  });
+});
+
+describe("summaryLine", () => {
+  it("reports score, findings, dropped and deduped counts and cost", () => {
+    const line = summaryLine({
+      overall: { score: 71, rag: "red" }, findings: [], droppedFindings: 2, dedupedFindings: 1, failedDimensions: [],
+      usage: { inputTokens: 1, outputTokens: 1, costUsd: 0.1234 },
+    });
+    expect(line).toBe("Overall 71/100 (red) · 0 findings · 2 dropped · 1 deduped · $0.1234");
+  });
+
+  it("names failed dimensions", () => {
+    const line = summaryLine({
+      overall: { score: 71, rag: "amber" }, findings: [], droppedFindings: 0, dedupedFindings: 0, failedDimensions: ["security"],
+      usage: { inputTokens: 1, outputTokens: 1, costUsd: 0 },
+    });
+    expect(line).toContain("not assessed: security");
   });
 });
 

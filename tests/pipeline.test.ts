@@ -42,6 +42,35 @@ describe("runDueDiligence", () => {
     expect(report.summary!.headline).toBe("Leaked credentials block close.");
   });
 
+  it("full mode: a failing specialist marks its dimension not assessed instead of killing the run", async () => {
+    const strength = (d: string) => ({
+      findings: [{ title: `Strength in ${d}`, dimension: d, severity: "info", description: "d", evidenceIds: ["ARC-001"], recommendation: "Keep", effort: "S" }],
+    });
+    const mock = new MockAnthropicClient([
+      { text: "not json" }, // architecture
+      { text: "still not json" }, // architecture repair — runStructured throws
+      ...DIMENSIONS.slice(1).map((d) => ({ text: JSON.stringify(strength(d)) })),
+      { text: JSON.stringify({ headline: "h", redFlags: [], valueLevers: [], hundredDayPlan: [] }) },
+    ]);
+    const report = await runDueDiligence({
+      root: makeRepo(files), target: "demo", mode: "full", model: "mock", client: mock.asClient(), concurrency: 1,
+    });
+    expect(mock.callCount).toBe(7);
+    expect(report.failedDimensions).toEqual(["architecture"]);
+    expect(report.scores.find((s) => s.dimension === "architecture")).toMatchObject({ assessed: false });
+    expect(report.findings.some((f) => f.dimension === "architecture" && f.severity === "info")).toBe(false);
+    expect(report.overall.rag).not.toBe("green");
+    expect(renderMarkdown(report)).toContain("Not assessed");
+    expect(renderHtml(report)).toContain("Not assessed");
+  });
+
+  it("full mode: throws when every specialist fails", async () => {
+    const mock = new MockAnthropicClient([]);
+    await expect(runDueDiligence({
+      root: makeRepo(files), target: "demo", mode: "full", model: "mock", client: mock.asClient(), concurrency: 1,
+    })).rejects.toThrow(/All specialists failed/);
+  });
+
   it("full mode: redacts secrets echoed by the model from every output", async () => {
     const echo = (d: string) => ({
       findings: [{

@@ -24,6 +24,8 @@ function sampleReport(over: Partial<Report> = {}): Report {
     evidence: [{ id: "SEC-001", dimension: "security", kind: "secrets", summary: "1 probable secret", detail: "src/a.ts:1 — AWS access key" }],
     findings,
     droppedFindings: 2,
+    dedupedFindings: 3,
+    failedDimensions: [],
     scores,
     overall: overallScore(scores, findings),
     summary: { headline: "Fix secrets before close.", redFlags: ["Secrets"], valueLevers: ["CI"], hundredDayPlan: ["Rotate keys"] },
@@ -40,6 +42,24 @@ describe("renderMarkdown", () => {
     expect(md).toContain("[CRITICAL]");
     expect(md).toContain("`SEC-001`");
     expect(md).toContain("2 model findings were discarded");
+    expect(md).toContain("3 findings were removed as cross-dimension duplicates");
+  });
+
+  it("uses the singular for one finding", () => {
+    const md = renderMarkdown(sampleReport({ droppedFindings: 1, dedupedFindings: 1 }));
+    expect(md).toContain("1 model finding was discarded");
+    expect(md).toContain("1 finding was removed as a cross-dimension duplicate");
+  });
+
+  it("renders a failed dimension as not assessed", () => {
+    const scores = scoreDimensions([], ["security"]);
+    const md = renderMarkdown(sampleReport({ scores, failedDimensions: ["security"] }));
+    expect(md).toContain("| Security | — | Not assessed | 0 |");
+    expect(md).toMatch(/security.*could not be completed/i);
+  });
+
+  it("leaves the model-findings sentence out of offline reports", () => {
+    expect(renderMarkdown(sampleReport({ summary: null, mode: "offline", droppedFindings: 0 }))).not.toContain("discarded");
   });
 
   it("explains offline mode when there is no summary", () => {
@@ -55,5 +75,18 @@ describe("renderHtml", () => {
     expect(html).toContain('href="#ev-SEC-001"');
     expect(html).toContain('id="ev-SEC-001"');
     expect(html.startsWith("<!doctype html>")).toBe(true);
+  });
+
+  it("shows the discarded/deduped footnote only in full mode, with correct plurals", () => {
+    const one = renderHtml(sampleReport({ droppedFindings: 1, dedupedFindings: 2 }));
+    expect(one).toContain("1 model finding discarded");
+    expect(one).toContain("2 findings removed as cross-dimension duplicates");
+    expect(renderHtml(sampleReport({ summary: null, mode: "offline" }))).not.toContain("discarded");
+  });
+
+  it("renders a failed dimension as not assessed without a score", () => {
+    const scores = scoreDimensions([], ["security"]);
+    const html = renderHtml(sampleReport({ scores, failedDimensions: ["security"] }));
+    expect(html).toMatch(/<div class="card na">[^]*?Security[^]*?Not assessed/);
   });
 });

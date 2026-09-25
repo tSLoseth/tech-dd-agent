@@ -7,6 +7,7 @@ import { runDueDiligence } from "./pipeline.js";
 import { renderHtml } from "./report/html.js";
 import { renderMarkdown } from "./report/markdown.js";
 import { resolveTarget } from "./target.js";
+import type { Report } from "./types.js";
 
 const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 const USAGE = "Usage: npm run dd -- <repo-url|path> [--offline] [--out <dir>] [--model <id>] [--concurrency <n>]";
@@ -51,6 +52,11 @@ export function describeToolCall(tool: string, input: unknown): string {
   return `${tool} ${JSON.stringify(input)}`;
 }
 
+export function summaryLine(r: Pick<Report, "overall" | "findings" | "droppedFindings" | "dedupedFindings" | "failedDimensions" | "usage">): string {
+  const failed = r.failedDimensions.length ? ` · not assessed: ${r.failedDimensions.join(", ")}` : "";
+  return `Overall ${r.overall.score}/100 (${r.overall.rag}) · ${r.findings.length} findings · ${r.droppedFindings} dropped · ${r.dedupedFindings} deduped · $${r.usage.costUsd.toFixed(4)}${failed}`;
+}
+
 async function main(): Promise<void> {
   loadEnv();
   const args = parseArgs(process.argv.slice(2));
@@ -72,6 +78,7 @@ async function main(): Promise<void> {
       model: args.model,
       concurrency: args.concurrency,
       bus,
+      onDimensionError: (d, err) => console.error(`  [dd-${d}] failed: ${err instanceof Error ? err.message : String(err)}`),
     });
 
     const outDir = resolve(args.out ?? join("reports", slug(args.target)));
@@ -80,7 +87,7 @@ async function main(): Promise<void> {
     writeFileSync(join(outDir, "report.md"), renderMarkdown(report));
     writeFileSync(join(outDir, "report.html"), renderHtml(report));
 
-    console.log(`Overall ${report.overall.score}/100 (${report.overall.rag}) · ${report.findings.length} findings · ${report.droppedFindings} dropped · $${report.usage.costUsd.toFixed(4)}`);
+    console.log(summaryLine(report));
     console.log(`Report: ${join(outDir, "report.html")}`);
   } finally {
     target.cleanup();

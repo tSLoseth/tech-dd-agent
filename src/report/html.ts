@@ -1,5 +1,5 @@
 import type { Report } from "../types.js";
-import { DIMENSION_LABEL, RAG_LABEL } from "./labels.js";
+import { DIMENSION_LABEL, RAG_LABEL, failedNote, plural } from "./labels.js";
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const esc = (s: string): string => s.replace(/[&<>"']/g, (c) => ESCAPES[c]!);
@@ -10,7 +10,7 @@ const CSS = `:root{--bg:#fafaf9;--fg:#1c1917;--muted:#78716c;--card:#fff;--line:
 main{max-width:1040px;margin:0 auto;padding:32px 16px}h1{margin:.2em 0}h2{margin-top:2em;font-size:1.1rem}
 .eyebrow,.meta{color:var(--muted);font-size:.85rem;margin:0}
 .overall{font-size:3rem;font-weight:700;margin:12px 0}.overall span{font-size:1rem;color:var(--muted)}
-.green{color:var(--green)}.amber{color:var(--amber)}.red{color:var(--red)}.headline{font-size:1.15rem;font-weight:600}
+.green{color:var(--green)}.na{color:var(--muted)}.amber{color:var(--amber)}.red{color:var(--red)}.headline{font-size:1.15rem;font-weight:600}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-top:4px solid currentColor;border-radius:8px;padding:12px}
 .card .label{color:var(--fg);font-size:.85rem}.card .score{font-size:2rem;font-weight:700}
@@ -28,8 +28,12 @@ export function renderHtml(r: Report): string {
     : `<p class="headline">Offline mode — deterministic scanner findings only.</p>`;
 
   const cards = r.scores
-    .map((s) => `<div class="card ${s.rag}"><div class="label">${esc(DIMENSION_LABEL[s.dimension])}</div><div class="score">${s.score}</div><div class="meta">${RAG_LABEL[s.rag]} · ${s.findingCount} findings</div></div>`)
+    .map((s) => `<div class="card ${s.assessed ? s.rag : "na"}"><div class="label">${esc(DIMENSION_LABEL[s.dimension])}</div><div class="score">${s.assessed ? s.score : "—"}</div><div class="meta">${s.assessed ? RAG_LABEL[s.rag] : "Not assessed"} · ${plural(s.findingCount, "finding")}</div></div>`)
     .join("");
+  const failed = r.failedDimensions.length ? `<p class="meta"><strong>Not assessed:</strong> ${esc(failedNote(r.failedDimensions))}</p>` : "";
+  const modelNote = r.mode === "full"
+    ? `${plural(r.droppedFindings, "model finding")} discarded for citing non-existent evidence; ${plural(r.dedupedFindings, "finding")} removed as ${r.dedupedFindings === 1 ? "a cross-dimension duplicate" : "cross-dimension duplicates"}. `
+    : "";
 
   const rows = r.findings
     .map((f) => `<tr><td><span class="sev ${f.severity}">${f.severity}</span></td><td>${esc(DIMENSION_LABEL[f.dimension])}</td><td><strong>${esc(f.title)}</strong><br>${esc(f.description)}<br><em>${esc(f.recommendation)}</em></td><td>${f.effort}</td><td>${f.evidenceIds.map((id) => `<a href="#ev-${esc(id)}">${esc(id)}</a>`).join(" ")}</td></tr>`)
@@ -44,9 +48,9 @@ export function renderHtml(r: Report): string {
 <p class="meta">Generated ${esc(r.generatedAt)} · ${r.mode}${r.model ? ` · ${esc(r.model)}` : ""} · ${r.stats.files} files · $${r.usage.costUsd.toFixed(4)}</p>
 <div class="overall ${r.overall.rag}">${r.overall.score}<span>/100</span></div></header>
 ${summary}
-<section><h2>Scorecard</h2><div class="cards">${cards}</div></section>
+<section><h2>Scorecard</h2><div class="cards">${cards}</div>${failed}</section>
 <section><h2>Findings</h2><div class="table"><table><thead><tr><th>Severity</th><th>Dimension</th><th>Finding</th><th>Effort</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></div></section>
 <section><h2>Evidence</h2><ul class="evidence">${evidence}</ul></section>
-<p class="meta">${r.droppedFindings} model findings discarded for citing non-existent evidence. Scores are deterministic from severity penalties.</p>
+<p class="meta">${modelNote}Scores are deterministic from severity penalties.</p>
 </main></body></html>`;
 }

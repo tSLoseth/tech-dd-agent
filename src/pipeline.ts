@@ -5,7 +5,7 @@ import { buildInventory, languageStats, makeReader } from "./inventory.js";
 import { collectEvidence } from "./scanners/index.js";
 import { redactSecrets } from "./scanners/security.js";
 import { combineFindings, groundFindings, overallScore, ruleFindings, scoreDimensions, sortFindings } from "./scoring.js";
-import { DIMENSIONS, type Finding, type Report, type Summary } from "./types.js";
+import { DIMENSIONS, type Dimension, type Finding, type Report, type Summary } from "./types.js";
 
 export interface PipelineOptions extends AgentOptions {
   root: string;
@@ -13,6 +13,7 @@ export interface PipelineOptions extends AgentOptions {
   mode: "full" | "offline";
   concurrency?: number;
   now?: Date;
+  onDimensionError?: (dimension: Dimension, err: unknown) => void;
 }
 
 export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
@@ -28,19 +29,30 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
   const rules = ruleFindings(ledger.all());
   let findings: Finding[] = rules;
   let droppedFindings = 0;
+  let dedupedFindings = 0;
+  const failedDimensions: Dimension[] = [];
 
   if (opts.mode === "full") {
     const results = await mapLimit(DIMENSIONS, opts.concurrency ?? DIMENSIONS.length, (d) =>
-      runSpecialist(d, inventory, ledger, opts),
+      runSpecialist(d, inventory, ledger, opts).catch((err: unknown) => {
+        opts.onDimensionError?.(d, err);
+        failedDimensions.push(d);
+        return null;
+      }),
     );
-    results.forEach((r) => addUsage(r.usage));
-    const grounded = groundFindings(results.flatMap((r) => r.findings).map(redactFinding), ledger);
+    const ok = results.filter((r) => r !== null);
+    if (ok.length === 0) throw new Error("All specialists failed; no report was written.");
+    ok.forEach((r) => addUsage(r.usage));
+    const grounded = groundFindings(ok.flatMap((r) => r.findings).map(redactFinding), ledger);
     droppedFindings = grounded.dropped;
-    findings = combineFindings(rules, grounded.kept, ledger);
+    const combined = combineFindings(rules, grounded.kept, ledger);
+    findings = combined.findings;
+    dedupedFindings = combined.deduped;
   }
+  failedDimensions.sort((a, b) => DIMENSIONS.indexOf(a) - DIMENSIONS.indexOf(b));
 
   findings = sortFindings(findings);
-  const scores = scoreDimensions(findings);
+  const scores = scoreDimensions(findings, failedDimensions);
   const overall = overallScore(scores, findings);
 
   let summary: Report["summary"] = null;
@@ -64,6 +76,8 @@ export async function runDueDiligence(opts: PipelineOptions): Promise<Report> {
     evidence: ledger.all(),
     findings,
     droppedFindings,
+    dedupedFindings,
+    failedDimensions,
     scores,
     overall,
     summary,

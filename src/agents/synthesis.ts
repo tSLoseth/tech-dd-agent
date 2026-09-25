@@ -9,7 +9,8 @@ Write the executive summary for the investment committee using ONLY the scored f
 - redFlags: the issues that could affect price or must be fixed before close (may be empty).
 - valueLevers: technology improvements that would create value after the deal.
 - hundredDayPlan: concrete, ordered actions for the first 100 days.
-Plain language, no jargon without explanation, no claims beyond the findings.`;
+Plain language, no jargon without explanation, no claims beyond the findings.
+A dimension with "assessed": false could not be reviewed in this run; say so where relevant and do not guess its state.`;
 
 export async function runSynthesis(
   target: string,
@@ -22,7 +23,7 @@ export async function runSynthesis(
   const input = JSON.stringify({
     target,
     overall,
-    scores,
+    scores: scores.map((s) => (s.assessed ? s : { dimension: s.dimension, assessed: false })),
     findings: findings.map(({ title, dimension, severity, recommendation, effort }) => ({ title, dimension, severity, recommendation, effort })),
   }, null, 2);
   const { output, result } = await runStructured(agent, input, SummarySchema, { bus: opts.bus });

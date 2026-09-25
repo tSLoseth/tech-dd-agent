@@ -1,6 +1,6 @@
 import { PENALTY } from "../scoring.js";
 import { DIMENSIONS, type Report } from "../types.js";
-import { DIMENSION_LABEL, RAG_LABEL } from "./labels.js";
+import { DIMENSION_LABEL, RAG_LABEL, failedNote, plural } from "./labels.js";
 
 const bullets = (items: string[]): string[] => (items.length ? items.map((i) => `- ${i}`) : ["- None identified"]);
 
@@ -20,8 +20,11 @@ export function renderMarkdown(r: Report): string {
   }
 
   L.push("## Scorecard", "", "| Dimension | Score | Status | Findings |", "|---|---:|:---:|---:|");
-  for (const s of r.scores) L.push(`| ${DIMENSION_LABEL[s.dimension]} | ${s.score} | ${RAG_LABEL[s.rag]} | ${s.findingCount} |`);
+  for (const s of r.scores) {
+    L.push(`| ${DIMENSION_LABEL[s.dimension]} | ${s.assessed ? s.score : "—"} | ${s.assessed ? RAG_LABEL[s.rag] : "Not assessed"} | ${s.findingCount} |`);
+  }
   L.push("");
+  if (r.failedDimensions.length) L.push(`> **Not assessed:** ${failedNote(r.failedDimensions)}`, "");
 
   L.push("## Findings", "");
   for (const d of DIMENSIONS) {
@@ -44,6 +47,10 @@ export function renderMarkdown(r: Report): string {
 
   const penalties = Object.entries(PENALTY).filter(([, p]) => p > 0).map(([s, p]) => `${s} −${p}`).join(", ");
   L.push("## Method", "");
-  L.push(`Scores are computed deterministically from the findings (${penalties}; any critical finding makes the dimension red). Every finding cites evidence from the scanners or from files the agents actually opened; ${r.droppedFindings} model findings were discarded for citing evidence that does not exist. Critical and high scanner flags cannot be removed by the model. Cost: $${r.usage.costUsd.toFixed(4)} (${(r.usage.inputTokens + r.usage.outputTokens).toLocaleString("en-US")} tokens).`);
+  const was = (n: number) => (n === 1 ? "was" : "were");
+  const modelNote = r.mode === "full"
+    ? ` ${plural(r.droppedFindings, "model finding")} ${was(r.droppedFindings)} discarded for citing evidence that does not exist, and ${plural(r.dedupedFindings, "finding")} ${was(r.dedupedFindings)} removed as ${r.dedupedFindings === 1 ? "a cross-dimension duplicate" : "cross-dimension duplicates"}.`
+    : "";
+  L.push(`Scores are computed deterministically from the findings (${penalties}; any critical finding makes the dimension red). Every finding cites evidence from the scanners or from files the agents actually opened.${modelNote} Critical and high scanner flags cannot be removed by the model. Cost: $${r.usage.costUsd.toFixed(4)} (${(r.usage.inputTokens + r.usage.outputTokens).toLocaleString("en-US")} tokens).`);
   return `${L.join("\n")}\n`;
 }

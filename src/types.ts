@@ -81,6 +81,7 @@ export interface DimensionScore {
   score: number;
   rag: Rag;
   findingCount: number;
+  assessed: boolean; // false when the dimension's specialist failed; score and rag are then not meaningful
 }
 
 export interface Report {
@@ -92,6 +93,8 @@ export interface Report {
   evidence: Evidence[];
   findings: Finding[];
   droppedFindings: number;
+  dedupedFindings: number;
+  failedDimensions: Dimension[];
   scores: DimensionScore[];
   overall: { score: number; rag: Rag };
   summary: Summary | null;
