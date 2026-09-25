@@ -66,7 +66,7 @@ export function createEvidenceTools(inv: Inventory, ledger: EvidenceLedger, dime
           if (matches.length >= maxResults) break;
         }
         const evidence = ledger.add(
-          { dimension, kind: "search", summary: `Searched /${pattern}/: ${matches.length} matches`, files: [...files].slice(0, 10) },
+          { dimension, kind: "search", summary: `Code search (${pattern.length}-char pattern): ${matches.length} matches`, files: [...files].slice(0, 10) },
           "READ",
         );
         return { evidenceId: evidence.id, matches };

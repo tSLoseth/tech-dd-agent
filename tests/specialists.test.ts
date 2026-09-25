@@ -41,6 +41,16 @@ describe("createEvidenceTools", () => {
     expect(out.evidenceId).toBe("READ-001");
     expect(out.matches).toHaveLength(2);
   });
+
+  it("grep keeps the searched pattern out of the ledger", async () => {
+    const secret = "AKIA" + "ABCDEFGHIJKLMNOP";
+    const inv = buildInventory(makeRepo({ "src/config.ts": `export const key = "${secret}";\n` }));
+    const ledger = collectEvidence({ inventory: inv, read: makeReader(inv) });
+    const grep = createEvidenceTools(inv, ledger, "security").find((t) => t.name === "grep")!;
+    const out = JSON.parse((await grep.execute({ pattern: secret }, ctx)).content);
+    expect(out.matches).toHaveLength(1);
+    expect(JSON.stringify(ledger.all())).not.toContain(secret);
+  });
 });
 
 describe("runSpecialist", () => {
